@@ -5,7 +5,6 @@ export default defineConfig({
   envDir: '..',
   server: {
     port: 5173,
-    // Necessário quando o Vite é exposto por um túnel (cloudflared/ngrok).
     allowedHosts: true,
     proxy: {
       '/api': 'http://localhost:3001',
@@ -16,4 +15,6 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
   },
+  // Permitir que o Vite leia variáveis de ambiente da pasta raiz
+  envPrefix: ['VITE_'],
 });
