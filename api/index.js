@@ -26,8 +26,7 @@ if (isProd && !SESSION_SECRET) {
   process.exit(1);
 }
 
-// Mock verifyToken and signToken since we don't have tokens.js in serverless
-// In production, these would be imported from the original tokens module
+// Mock auth functions
 function signToken(payload, ttl) {
   return btoa(JSON.stringify({ ...payload, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + ttl / 1000 }));
 }
@@ -43,12 +42,56 @@ function verifyToken(identity) {
   }
 }
 
-// In-memory storage (won't persist across invocations, but works for single instances)
-const AVATAR_CACHE = new Map();
-const AVATAR_CACHE_MAX = 200;
-
 const WEB_INSTANCE = 'web';
 const REDIRECT_URI = `${PUBLIC_ORIGIN}/auth/callback`;
+
+// Simple in-memory room storage
+const rooms = {
+  data: {},
+  listRooms(instance) {
+    return Object.values(this.data).filter(r => r.instance === instance);
+  },
+  createRoom({ instance, name, ownerId, ownerName, password }) {
+    const id = 'room-' + Math.random().toString(36).slice(2, 9);
+    const room = { id, instance, name, ownerId, ownerName, password, isCall: false, viewers: [], broadcaster: null, config: null };
+    this.data[id] = room;
+    return { room, error: null };
+  },
+  ensureCallRoom(instance, id) {
+    let room = Object.values(this.data).find(r => r.instance === instance && r.isCall);
+    if (!room) {
+      room = { id: 'call-' + Math.random().toString(36).slice(2, 9), instance, name: 'Sala da call', isCall: true, ownerId: null, ownerName: 'a call', password: null, viewers: [], broadcaster: null, config: null };
+      this.data[room.id] = room;
+    }
+    return room;
+  },
+  getRoom(roomId) {
+    return this.data[roomId] || null;
+  },
+  checkPassword(room, password) {
+    if (!room.password) return { ok: true };
+    if (password === room.password) return { ok: true };
+    return { ok: false, reason: 'senha_errada', seconds: 30 };
+  },
+  setPassword(room, uid, password) {
+    room.password = password;
+    return null;
+  },
+  attachBroadcaster() { return null; },
+  detachBroadcaster() {},
+  attachViewer() {},
+  detachViewer() {},
+  rename() {},
+  watch() {},
+  unwatch() {},
+  broadcasterOf() { return null; },
+  sendJson() {},
+  startStream() {},
+  stopStream() {},
+  setConfig() {},
+  setAudioConfig() {},
+  stats() { return { total: Object.keys(this.data).length, rooms: Object.keys(this.data).length, viewers: 0, broadcasters: 0 }; },
+};
 
 function issueIdentity(instance, uid, name, avatar, ttl = 8 * 60 * 60, extra = {}) {
   return {
@@ -67,74 +110,24 @@ function issueRoomTokens(roomId, me) {
   };
 }
 
-// Simple room storage
-const rooms = {
-  data: {},
-  listRooms(instance) {
-    return Object.values(this.data).filter(r => r.instance === instance);
-  },
-  createRoom({ instance, name, ownerId, ownerName, password }) {
-    const id = `room-${Math.random().toString(36).slice(2, 9)}`;
-    const room = { id, instance, name, ownerId, ownerName, password, isCall: false, viewers: [], broadcaster: null, config: null };
-    this.data[id] = room;
-    return { room, error: null };
-  },
-  ensureCallRoom(instance, callName) {
-    let room = Object.values(this.data).find(r => r.instance === instance && r.isCall);
-    if (!room) {
-      room = { id: `call-${Math.random().toString(36).slice(2, 9)}`, instance, name: callName, ownerId: 'owner', ownerName: 'Owner', password: false, isCall: true, viewers: [], broadcaster: null, config: null };
-      this.data[room.id] = room;
-    }
-    return room;
-  },
-  getRoom(roomId) {
-    return this.data[roomId] || null;
-  },
-  checkPassword(room, password) {
-    if (!room.password) return { ok: true };
-    if (password === room.password) return { ok: true };
-    return { ok: false, reason: 'senha_errada', seconds: 30 };
-  },
-  setPassword(room, uid, password) {
-    room.password = password;
-    return null;
-  },
-  attachBroadcaster(room, ws, info) { return null; },
-  detachBroadcaster(room, ws) {},
-  attachViewer(room, ws, info) {},
-  detachViewer(room, ws) {},
-  rename(room, ws, name) {},
-  watch(room, ws, slot) {},
-  unwatch(room, ws, slot) {},
-  broadcasterOf(room, uid) { return null; },
-  sendJson(ws, data) { if (ws) ws.json && ws.json(data); },
-  startStream(room, entry) {},
-  stopStream(room, entry) {},
-  setConfig(room, entry, config) {},
-  setAudioConfig(room, entry, config) {},
-  stats() { return { total: Object.keys(this.data).length, rooms: Object.keys(this.data).length, viewers: 0, broadcasters: 0 }; },
-};
-
-// API handler
-export default async function handler(req, res) {
+// Main handler - this will be at /api/ in Vercel
+export default function handler(req, res) {
   const { method, url } = req;
-
-  // Parse path
-  const pathMatch = url.match(/^\/api\/([^/]+)(.*)?$/);
-  if (!pathMatch) {
-    return res.status(404).json({ error: 'Not found' });
-  }
-
-  const endpoint = pathMatch[1];
-  const pathParams = pathMatch[2] || '';
-  const isAuth = url.startsWith('/auth/');
-
+  
+  // Match /api/ENDPOINT or /api/ENDPOINT/params
+  const match = url.match(/^\/api\/([^/]+)(?:\/([^/]+))?(?:\/(.+))?$/);
+  if (!match) return res.status(404).json({ error: 'Not found' });
+  
+  const endpoint = match[1];
+  const param1 = match[2];
+  const param2 = match[3];
+  
   try {
-    // Auth routes
-    if (isAuth) {
-      return handleAuth(req, res, method, pathParams);
+    // Auth routes: /api/token, /auth/login, /auth/callback
+    if (url.startsWith('/auth/')) {
+      return handleAuth(req, res, method, url);
     }
-
+    
     // API routes
     switch (endpoint) {
       case 'token':
@@ -146,9 +139,9 @@ export default async function handler(req, res) {
       case 'config':
         return handleConfig(req, res);
       case 'avatar':
-        return handleAvatar(req, res, pathParams);
+        return handleAvatar(req, res, param1, param2);
       case 'rooms':
-        return handleRooms(req, res, method, pathParams);
+        return handleRooms(req, res, method, param1);
       default:
         return res.status(404).json({ error: 'Endpoint not found' });
     }
@@ -158,20 +151,22 @@ export default async function handler(req, res) {
   }
 }
 
-function handleAuth(req, res, method, pathParams) {
+function handleAuth(req, res, method, url) {
+  // /auth/login -> GET
+  // /auth/callback -> GET with code query
+  
+  const path = url.replace('/auth/', '/');
+  
   if (method === 'GET') {
-    const { path } = req.query || {};
-    if (path === '/login') {
-      // Login OAuth
-      const url = new URL('https://discord.com/oauth2/authorize');
-      url.searchParams.set('client_id', DISCORD_CLIENT_ID);
-      url.searchParams.set('redirect_uri', REDIRECT_URI);
-      url.searchParams.set('response_type', 'code');
-      url.searchParams.set('scope', 'identify');
-      res.redirect(url.toString());
-    } else if (path === '/callback') {
-      // Callback OAuth
-      const { code } = req.query || {};
+    if (path === 'login') {
+      const authUrl = new URL('https://discord.com/oauth2/authorize');
+      authUrl.searchParams.set('client_id', DISCORD_CLIENT_ID);
+      authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
+      authUrl.searchParams.set('response_type', 'code');
+      authUrl.searchParams.set('scope', 'identify');
+      res.redirect(authUrl.toString());
+    } else if (path === 'callback') {
+      const { code } = new URL(url).query || {};
       if (!code) return res.redirect('/?erro=sem_codigo');
 
       try {
@@ -268,9 +263,7 @@ function handleSession(req, res, method) {
 
     if (!me?.id) return res.status(401).json({ error: 'token invalido' });
 
-    // Simplified presence check - in production would check voice state
-    const presenca = 'ok'; // Simplified for serverless
-
+    const presenca = 'ok';
     const verificado = presenca === 'ok' ? { call: channel_id } : {};
 
     const identity = issueIdentity(
@@ -304,8 +297,9 @@ function handleConfig(req, res) {
   res.json({ clientId: DISCORD_CLIENT_ID || null, asset });
 }
 
-function handleAvatar(req, res, pathParams) {
-  const { id, hash } = pathParams;
+function handleAvatar(req, res, id, hash) {
+  if (!id || !hash) return res.status(400).end();
+
   const AVATAR_ID = /^[0-9]{15,21}$/;
   const AVATAR_HASH = /^(a_)?[0-9a-f]{32}$/;
 
@@ -315,11 +309,15 @@ function handleAvatar(req, res, pathParams) {
   res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
 
   const chave = `${id}/${hash}`;
-  const guardado = AVATAR_CACHE.get(chave);
-  if (guardado) return res.end(guardado);
+  // Simple cache using globalThis
+  if (globalThis.__avatarCache) {
+    const guardado = globalThis.__avatarCache.get(chave);
+    if (guardado) return res.end(guardado);
+  } else {
+    globalThis.__avatarCache = new Map();
+  }
 
   try {
-    // In serverless, we fetch from CDN directly
     const fetch = require('node-fetch').default;
     const upstream = await fetch(`https://cdn.discordapp.com/avatars/${id}/${hash}.png?size=128`, {
       signal: AbortSignal.timeout(5000),
@@ -329,11 +327,11 @@ function handleAvatar(req, res, pathParams) {
 
     const imagem = Buffer.from(await upstream.arrayBuffer());
     
-    if (AVATAR_CACHE.size >= AVATAR_CACHE_MAX) {
-      const firstKey = AVATAR_CACHE.keys().next().value;
-      AVATAR_CACHE.delete(firstKey);
+    if (globalThis.__avatarCache && globalThis.__avatarCache.size >= 200) {
+      const firstKey = globalThis.__avatarCache.keys().next().value;
+      globalThis.__avatarCache.delete(firstKey);
     }
-    AVATAR_CACHE.set(chave, imagem);
+    if (globalThis.__avatarCache) globalThis.__avatarCache.set(chave, imagem);
 
     res.end(imagem);
   } catch {
@@ -341,12 +339,9 @@ function handleAvatar(req, res, pathParams) {
   }
 }
 
-function handleRooms(req, res, method, pathParams) {
+function handleRooms(req, res, method, subPath) {
   if (method === 'POST') {
-    const pathMatch2 = pathParams.match(/^\/([^/]+)?$/);
-    const subEndpoint = pathMatch2 ? pathMatch2[1] : '';
-
-    switch (subEndpoint) {
+    switch (subPath) {
       case 'list':
         return handleRoomsList(req, res);
       case 'create':
@@ -402,7 +397,6 @@ function handleRoomsJoin(req, res) {
   const room = rooms.getRoom(req.body?.roomId);
   if (!room) return res.status(404).json({ error: 'Sala não existe mais.' });
 
-  // Simplified - in production would check instance and password
   res.json(issueRoomTokens(room.id, me));
 }
 
@@ -421,6 +415,7 @@ function handleRoomsPassword(req, res) {
   res.json({ ok: true, locked: Boolean(room.password) });
 }
 
+// Export config for Vercel
 export const config = {
   api: {
     bodyParser: true,

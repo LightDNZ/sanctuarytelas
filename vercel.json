@@ -1,10 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/client/dist/$1" }
-  ],
   "functions": {
-    "api/(.*)": {
+    "api/index.js": {
       "runtime": "nodejs20"
     }
   }
