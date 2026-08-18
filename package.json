@@ -1,0 +1,25 @@
+{
+  "name": "discord-screen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "postinstall": "node -e \"console.log('\\n  Pronto. Agora rode:  npm run configurar\\n')\"",
+    "configurar": "node scripts/configurar.mjs",
+    "tunel": "node scripts/tunel.mjs",
+    "tunel:criar": "node scripts/tunel-criar.mjs",
+    "dev": "node scripts/dev.mjs",
+    "dev:rapido": "node scripts/dev.mjs --rapido",
+    "start": "npm run build && npm -w server run start",
+    "start:fast": "node scripts/start-fast.mjs",
+    "build": "npm -w client run build",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

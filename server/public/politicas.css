@@ -1,0 +1,148 @@
+/**
+ * Páginas de termos e privacidade.
+ *
+ * Folha própria, separada da share.css: aquela veste um cartão pequeno e
+ * centrado, com uma ação no meio. Aqui é texto longo para ler de cima a baixo,
+ * que pede medida de linha, hierarquia de títulos e respiro entre parágrafos —
+ * regras que na outra página só atrapalhariam.
+ */
+:root {
+  --bg: #1a1b1e;
+  --card: #232428;
+  --line: #35373c;
+  --text: #f2f3f5;
+  --muted: #9b9ea3;
+  --accent: #5865f2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px 20px 64px;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.7 "gg sans", "Segoe UI", system-ui, sans-serif;
+}
+
+main {
+  /* Medida de linha: acima de ~75 caracteres o olho perde a linha seguinte ao
+     voltar da direita para a esquerda. */
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 36px 40px 40px;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 26px;
+  line-height: 1.25;
+}
+
+h2 {
+  margin: 34px 0 10px;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+h3 {
+  margin: 22px 0 6px;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+p,
+li {
+  margin: 0 0 12px;
+}
+
+ul {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+li::marker {
+  color: var(--muted);
+}
+
+a {
+  color: var(--accent);
+}
+
+strong {
+  font-weight: 600;
+}
+
+.data {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* O resumo antes do texto legal: quem só quer saber "o que acontece com a
+   minha tela" não deveria ter que ler dez seções para descobrir. */
+.resumo {
+  margin: 24px 0 8px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: rgba(88, 101, 242, 0.06);
+}
+
+.resumo p:last-child,
+.resumo ul:last-child {
+  margin-bottom: 0;
+}
+
+table {
+  width: 100%;
+  margin: 0 0 12px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+/* A tabela é mais larga que o celular; rola dentro da própria caixa em vez de
+   empurrar a página inteira para o lado. */
+.tabela {
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+
+th,
+td {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: rgba(255, 255, 255, 0.03);
+  font-weight: 600;
+}
+
+code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 13px;
+}
+
+footer {
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+footer p {
+  margin: 0 0 8px;
+}

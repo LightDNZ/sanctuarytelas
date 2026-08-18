@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Compartilhar tela</title>
+    <!-- ?v= existe porque share.js/css têm nome fixo. Quem abriu a página antes
+         dos cabeçalhos no-store guardou a versão antiga por heurística do
+         navegador, e continuaria usando ela para sempre. Trocar a query força
+         uma URL nova. Incremente ao publicar mudanças nesses arquivos. -->
+    <link rel="stylesheet" href="/share.css?v=9" />
+  </head>
+  <body>
+    <main class="card">
+      <header>
+        <h1>Compartilhar tela</h1>
+        <p class="sub" id="roomLine">Carregando…</p>
+      </header>
+
+      <section id="setup">
+        <div class="row">
+          <label for="quality">Qualidade</label>
+          <select id="quality">
+            <option value="1000000">Leve — 1 Mbps</option>
+            <option value="2500000" selected>Boa — 2,5 Mbps</option>
+            <option value="5000000">Alta — 5 Mbps</option>
+            <option value="8000000">Máxima — 8 Mbps</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label for="fps">Taxa de quadros</label>
+          <select id="fps">
+            <option value="15">15 fps — economiza banda</option>
+            <option value="30" selected>30 fps — mais fluido</option>
+            <option value="60">60 fps — jogo e vídeo, exija 5 Mbps ou mais</option>
+          </select>
+        </div>
+
+        <p id="presetLine" class="preset" hidden></p>
+
+        <label class="check">
+          <input id="withAudio" type="checkbox" />
+          <span>Compartilhar o som do computador</span>
+        </label>
+
+        <p class="note">
+          Marque também "Compartilhar o áudio" na janela que o navegador abrir — sem isso
+          ele entrega a tela sem som.
+        </p>
+
+        <button id="start" class="primary">Escolher tela e transmitir</button>
+      </section>
+
+      <section id="live" hidden>
+        <div class="live-badge"><span class="dot"></span> No ar</div>
+        <video id="preview" muted playsinline></video>
+        <div class="stats">
+          <div><strong id="viewers">0</strong><span>assistindo</span></div>
+          <div><strong id="fpsOut">—</strong><span>quadros</span></div>
+          <div><strong id="bitrate">—</strong><span>enviando</span></div>
+          <div><strong id="elapsed">00:00</strong><span>no ar</span></div>
+        </div>
+        <button id="somAba" class="secondary" hidden>Som de uma aba</button>
+        <button id="stop" class="danger">Parar de transmitir</button>
+      </section>
+
+      <p id="status" class="status" role="status"></p>
+
+      <footer>
+        <p>Mantenha esta aba aberta enquanto transmite. Você pode voltar para o Discord — a transmissão continua.</p>
+      </footer>
+    </main>
+
+    <script type="module" src="/share.js?v=10"></script>
+  </body>
+</html>

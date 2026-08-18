@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Como não compartilhar tela no Discord</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="topbar">
+        <div id="people" class="pill" title="Pessoas na sala"></div>
+        <div id="roomPill" class="pill room-pill" hidden></div>
+      </div>
+
+      <main id="grid" class="grid"></main>
+
+      <div id="empty" class="empty">
+        <div class="icon">🖥️</div>
+        <h1 id="emptyTitle">Conectando…</h1>
+        <p id="emptyText" class="muted">Entrando na sala</p>
+      </div>
+
+      <!-- Lobby: escolher ou criar sala antes de entrar -->
+      <div id="lobby" class="lobby" hidden>
+        <header class="lobby-head">
+          <div>
+            <h1>Salas</h1>
+            <p class="muted">Neste canal de voz</p>
+          </div>
+          <div class="lobby-actions">
+            <button id="lobbyUser" class="user-chip" title="Seu perfil" hidden></button>
+            <button id="loginBtn" class="btn" hidden>Entrar com Discord</button>
+            <button id="newRoom" class="btn go">Criar sala</button>
+          </div>
+        </header>
+
+        <div id="roomList" class="room-list"></div>
+      </div>
+
+      <div id="createModal" class="modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+          <h2 id="createTitle">Criar sala</h2>
+          <p class="modal-sub">A sala fecha sozinha quando fica vazia por alguns minutos.</p>
+
+          <label class="field-col">
+            <span>Nome <em class="opt">(opcional)</em></span>
+            <input id="createName" type="text" maxlength="40" autocomplete="off" />
+          </label>
+
+          <label class="field-col field-gap">
+            <span>Senha <em class="opt">(opcional)</em></span>
+            <input id="createPass" type="password" maxlength="64" autocomplete="new-password" />
+          </label>
+
+          <div class="modal-actions">
+            <button id="createCancel" class="btn">Cancelar</button>
+            <button id="createGo" class="btn go">Criar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="joinModal" class="modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
+          <h2 id="joinTitle">Sala protegida</h2>
+          <p id="joinSub" class="modal-sub"></p>
+
+          <label class="field-col">
+            <span>Senha</span>
+            <input id="joinPass" type="password" maxlength="64" autocomplete="off" />
+          </label>
+
+          <p id="joinError" class="modal-error" hidden></p>
+
+          <div class="modal-actions">
+            <button id="joinCancel" class="btn">Cancelar</button>
+            <button id="joinGo" class="btn go">Entrar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="roomModal" class="modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="roomTitle">
+          <h2 id="roomTitle">Ajustes da sala</h2>
+          <p id="roomSub" class="modal-sub"></p>
+
+          <label class="field-col">
+            <span>Senha <em class="opt">(vazio remove)</em></span>
+            <input id="roomPass" type="password" maxlength="64" autocomplete="new-password" />
+          </label>
+
+          <div class="modal-actions">
+            <button id="roomCancel" class="btn">Cancelar</button>
+            <button id="roomSave" class="btn go">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de controles. Ocupa espaço no layout: não passa por cima da tela -->
+      <div class="bottombar">
+        <div id="panel" class="panel" hidden>
+          <div class="panel-row"><span>Transmitindo</span><strong id="pWho">—</strong></div>
+          <div class="panel-row"><span>Latência</span><strong id="pLag">—</strong></div>
+          <div class="panel-row"><span>Quadros</span><strong id="pFps">—</strong></div>
+          <div class="panel-row"><span>Resolução</span><strong id="pRes">—</strong></div>
+          <div class="panel-row"><span>Som</span><strong id="pSom">—</strong></div>
+          <button id="probe" class="panel-btn">Testar captura no iframe</button>
+        </div>
+
+        <div class="dock">
+          <div class="group">
+            <button id="share" class="btn wide" title="Compartilhar tela">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 5h18v11H3z" />
+                <path d="M8 20h8" />
+              </svg>
+              <span id="shareLabel">Compartilhar tela</span>
+            </button>
+            <button
+              id="liveSettings"
+              class="btn"
+              data-tip="Ajustes da transmissão"
+              aria-label="Ajustes da transmissão"
+              hidden
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="3.2" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div class="group">
+            <button
+              id="settings"
+              class="btn"
+              data-tip="Detalhes da transmissão"
+              aria-label="Detalhes da transmissão"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9.5" />
+                <path d="M12 16.5v-5M12 7.8h.01" />
+              </svg>
+            </button>
+            <div id="volumeBox" class="volume" hidden>
+              <button id="mute" class="btn" title="Silenciar" aria-label="Silenciar">
+                <svg id="muteOn" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M11 5 6 9H2v6h4l5 4V5z" />
+                  <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14" />
+                </svg>
+                <svg id="muteOff" viewBox="0 0 24 24" aria-hidden="true" hidden>
+                  <path d="M11 5 6 9H2v6h4l5 4V5z" />
+                  <path d="M22 9l-6 6M16 9l6 6" />
+                </svg>
+              </button>
+
+              <div class="volume-pop">
+                <span id="volumeVal" class="volume-val">100%</span>
+                <input
+                  id="volume"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="100"
+                  aria-label="Volume"
+                />
+              </div>
+            </div>
+            <button id="fullscreen" class="btn" data-tip="Tela cheia" aria-label="Tela cheia" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+              </svg>
+            </button>
+            <button
+              id="profile"
+              class="btn profile-btn"
+              data-tip="Seu perfil"
+              aria-label="Seu perfil"
+            ></button>
+          </div>
+
+          <div class="group">
+            <button
+              id="roomSettings"
+              class="btn"
+              data-tip="Senha da sala"
+              aria-label="Senha da sala"
+              hidden
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="4" y="11" width="16" height="10" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+            </button>
+            <button
+              id="leaveRoom"
+              class="btn leave"
+              data-tip="Sair da sala"
+              aria-label="Sair da sala"
+              hidden
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="M16 17l5-5-5-5M21 12H9" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="modal" class="modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+          <h2 id="modalTitle">Compartilhar sua tela</h2>
+          <p id="modalSub" class="modal-sub">Escolha a tela e comece a transmitir.</p>
+
+          <label class="field">
+            <span>Qualidade</span>
+            <select id="mQuality">
+              <option value="1000000">Leve — 1 Mbps</option>
+              <option value="2500000" selected>Boa — 2,5 Mbps</option>
+              <option value="5000000">Alta — 5 Mbps</option>
+              <option value="8000000">Máxima — 8 Mbps</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Taxa de quadros</span>
+            <select id="mFps">
+              <option value="15">15 fps — economiza banda</option>
+              <option value="30" selected>30 fps — mais fluido</option>
+              <option value="60">60 fps — jogo e vídeo, exija 5 Mbps ou mais</option>
+            </select>
+          </label>
+
+          <label class="field-check">
+            <input id="mAudio" type="checkbox" />
+            <span>
+              Compartilhar o som
+              <em class="opt">
+                O som só vem de uma <strong>aba do navegador</strong> — escolha uma aba na
+                janela seguinte e marque "Compartilhar o áudio da guia". Tela inteira
+                carregaria o som do Discord junto, e a call se ouviria em eco.
+              </em>
+            </span>
+          </label>
+
+          <button id="modalSwap" class="panel-btn" hidden>Trocar a tela compartilhada</button>
+          <button id="modalSom" class="panel-btn" hidden>Som de uma aba</button>
+
+          <p id="modalNote" class="modal-note">
+            Se o Discord não permitir capturar aqui dentro, a escolha da tela abre numa aba do
+            seu navegador — e aí transmitir exige Chrome, Edge ou outro Chromium.
+          </p>
+
+          <div class="modal-actions">
+            <button id="modalCancel" class="btn">Cancelar</button>
+            <button id="modalGo" class="btn go">Compartilhar tela</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="profileModal" class="modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+          <h2 id="profileTitle">Seu perfil</h2>
+
+          <div class="profile-head">
+            <div id="profileAvatar"></div>
+            <div class="profile-meta">
+              <strong id="profileName"></strong>
+              <span id="profileId" class="muted"></span>
+            </div>
+          </div>
+
+          <label class="field-col">
+            <span>Nome exibido</span>
+            <input id="profileInput" type="text" maxlength="32" autocomplete="off" />
+          </label>
+
+          <div class="modal-actions">
+            <button id="profileCancel" class="btn">Cancelar</button>
+            <button id="profileSave" class="btn go">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

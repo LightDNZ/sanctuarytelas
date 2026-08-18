@@ -1,0 +1,25 @@
+# O que não tem por que entrar no contexto do build.
+#
+# node_modules fica de fora não por tamanho: as dependências nativas são
+# compiladas para o sistema de quem construiu, e copiar as de um Windows para
+# dentro de uma imagem Linux quebra de um jeito difícil de entender.
+node_modules
+**/node_modules
+
+# Gerado dentro da imagem, na etapa de build.
+client/dist
+
+# Segredos e coisas locais. O .env não entra: no Dokploy a configuração vem
+# das variáveis de ambiente, e uma cópia dentro da imagem só serviria para
+# vazar e para divergir.
+.env
+.cache
+.git
+.gitignore
+
+# Nada disso é executado.
+docs
+infra
+squarecloud.app
+*.png
+*.log

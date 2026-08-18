@@ -1,0 +1,238 @@
+:root {
+  --bg: #1a1b1e;
+  --card: #232428;
+  --line: #35373c;
+  --text: #f2f3f5;
+  --muted: #9b9ea3;
+  --accent: #5865f2;
+  --danger: #da373c;
+  --ok: #23a55a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 "gg sans", "Segoe UI", system-ui, sans-serif;
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 28px;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.sub {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+label {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+select {
+  flex: 1;
+  max-width: 260px;
+  padding: 8px 10px;
+  background: #1e1f22;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+}
+
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 18px 0 24px;
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.check em {
+  display: block;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 13px;
+}
+
+.check input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+button {
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 8px;
+  font: 600 15px/1 inherit;
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--accent);
+}
+
+.danger {
+  background: var(--danger);
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(35, 165, 90, 0.14);
+  color: var(--ok);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  object-fit: contain;
+}
+
+.preset {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  margin: 18px 0 24px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #1e1f22;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.stats div {
+  padding: 10px 4px;
+  background: #1e1f22;
+  border-radius: 8px;
+}
+
+.stats strong {
+  display: block;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.status {
+  margin: 16px 0 0;
+  min-height: 20px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Aviso nao e erro: o som foi descartado, mas a tela continua no ar. */
+.secondary {
+  margin-bottom: 10px;
+  background: #3a3d44;
+  color: #f2f3f5;
+}
+
+.secondary:hover {
+  background: #474b53;
+}
+
+.status.aviso {
+  color: #f0b232;
+}
+
+.status.error {
+  color: #ff8a8f;
+}
+
+.status.ok {
+  color: var(--ok);
+}
+
+footer p {
+  margin: 22px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}

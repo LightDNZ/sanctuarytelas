@@ -1,0 +1,23 @@
+# Caddy na frente do servidor: TLS automático e WebSocket sem configuração.
+#
+# Instalar com:
+#   sudo cp infra/Caddyfile /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+#
+# Escolhemos Caddy em vez de nginx por causa de duas linhas que no nginx são
+# vinte: o certificado do Let's Encrypt, renovado sozinho, e o upgrade do
+# WebSocket, que o reverse_proxy repassa sem precisar de bloco de headers.
+
+discordbr.live {
+	# O relay do WebSocket passa por aqui igual ao HTTP — o Caddy detecta o
+	# upgrade sozinho. Não comprima: o que viaja no socket já é vídeo
+	# codificado, e comprimir de novo só gasta CPU.
+	reverse_proxy 127.0.0.1:3001
+
+	encode zstd gzip
+
+	# Nenhum X-Frame-Options aqui, de propósito. Foi um header desses, posto
+	# pela borda de um PaaS, que impediu a Activity de abrir por um dia
+	# inteiro — o Discord embute a página num iframe e o navegador obedece ao
+	# header antes de qualquer coisa. Ver o comentário em server/index.js.
+}

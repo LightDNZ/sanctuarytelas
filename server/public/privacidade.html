@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Política de Privacidade · Sala de Tela</title>
+    <link rel="stylesheet" href="/politicas.css?v=1" />
+  </head>
+  <body>
+    <main>
+      <h1>Política de Privacidade</h1>
+      <p class="data">Última atualização: 18 de agosto de 2026</p>
+
+      <div class="resumo">
+        <p><strong>Em resumo:</strong></p>
+        <ul>
+          <li>A sua tela e o seu áudio <strong>nunca são gravados</strong>. Eles atravessam o servidor em tempo real e são descartados no mesmo instante.</li>
+          <li>Não existe banco de dados. Nada é escrito em disco.</li>
+          <li>Do Discord recebemos apenas <strong>id, nome de usuário e foto de perfil</strong>. Não temos acesso ao seu e-mail, às suas mensagens nem à sua lista de servidores.</li>
+          <li>Quando a sala esvazia, ela deixa de existir em cerca de 12 segundos — e tudo que havia nela some junto.</li>
+        </ul>
+      </div>
+
+      <h2>1. Quem opera este serviço</h2>
+      <p>
+        A Sala de Tela é uma atividade do Discord que permite compartilhar a tela com quem está na
+        mesma sala. O código é aberto e está disponível em
+        <a href="https://github.com/Jc007zZ/discord-screen">github.com/Jc007zZ/discord-screen</a>.
+      </p>
+      <p>
+        Esta política se aplica à instância operada neste endereço. Como o programa pode ser
+        instalado por qualquer pessoa em servidor próprio, outras instalações são operadas por
+        terceiros e não estão cobertas por este documento.
+      </p>
+
+      <h2>2. Que dados são tratados</h2>
+
+      <h3>2.1 Dados recebidos do Discord</h3>
+      <p>
+        Ao entrar, você autoriza o acesso apenas ao escopo <code>identify</code>. Com ele recebemos:
+      </p>
+      <ul>
+        <li>o seu <strong>identificador numérico</strong> no Discord;</li>
+        <li>o seu <strong>nome de usuário ou nome de exibição</strong>;</li>
+        <li>o <strong>código da sua foto de perfil</strong>, usado para exibi-la.</li>
+      </ul>
+      <p>
+        Não recebemos e não temos como obter o seu e-mail, a sua senha, as suas mensagens, a sua
+        lista de amigos ou a lista de servidores dos quais você participa.
+      </p>
+      <p>
+        Quando a atividade é aberta dentro de uma chamada, o Discord também informa os
+        identificadores da <strong>instância, do servidor e do canal de voz</strong>. Eles servem
+        para que a sala daquela chamada exista e para que apenas quem está na chamada entre nela.
+      </p>
+      <p>
+        Se a pessoa que administra a instalação tiver configurado um bot, ele consulta ao Discord
+        <strong>se você está no canal de voz</strong> daquela sala — e nada além disso. Sem bot
+        configurado, essa verificação simplesmente não acontece.
+      </p>
+
+      <h3>2.2 Dados que você fornece</h3>
+      <ul>
+        <li><strong>Apelido:</strong> se você trocar o nome exibido, ele passa a ser o nome mostrado às outras pessoas da sala.</li>
+        <li><strong>Nome da sala:</strong> texto livre, visível a quem vê a lista de salas públicas.</li>
+        <li><strong>Senha da sala:</strong> guardada apenas em forma embaralhada (<em>hash</em> com sal, algoritmo scrypt). A senha original não fica registrada em lugar nenhum e não pode ser recuperada.</li>
+      </ul>
+
+      <h3>2.3 Conteúdo transmitido</h3>
+      <p>
+        A imagem da sua tela e, se você escolher, o som são divididos em pedaços e repassados às
+        pessoas que pediram para assistir. Esses pedaços passam pela memória do servidor apenas
+        durante o instante do repasse.
+      </p>
+      <p>
+        <strong>Nada disso é gravado, armazenado ou analisado.</strong> Não há gravação, captura de
+        quadros, transcrição, reconhecimento de imagem nem qualquer outro processamento do que
+        aparece na sua tela. Quem não pediu para assistir àquela transmissão não recebe um único
+        pedaço dela — o filtro é feito no servidor, não no navegador de quem assiste.
+      </p>
+
+      <h2>3. Onde os dados ficam</h2>
+      <p>
+        Não existe banco de dados. O programa não grava arquivos: salas, participantes e senhas
+        embaralhadas vivem apenas na memória do processo enquanto ele está no ar.
+      </p>
+      <div class="tabela">
+        <table>
+          <thead>
+            <tr>
+              <th>Dado</th>
+              <th>Onde fica</th>
+              <th>Por quanto tempo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sala, participantes, senha embaralhada</td>
+              <td>Memória do servidor</td>
+              <td>Até cerca de 12 segundos depois de a sala ficar vazia</td>
+            </tr>
+            <tr>
+              <td>Tela e som transmitidos</td>
+              <td>Memória do servidor, em trânsito</td>
+              <td>O instante do repasse</td>
+            </tr>
+            <tr>
+              <td>Crachá de identidade (assinado)</td>
+              <td>Navegador, em <code>localStorage</code></td>
+              <td>8 horas</td>
+            </tr>
+            <tr>
+              <td>Foto de perfil</td>
+              <td>Memória do servidor, em cache</td>
+              <td>Até ser descartada por entrada mais nova</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Reiniciar o servidor apaga tudo que estava em memória. Mensagens de diagnóstico podem
+        aparecer no terminal de quem opera a instalação, mas o programa não grava arquivos de log.
+      </p>
+
+      <h2>4. Armazenamento no seu navegador</h2>
+      <p>
+        Não usamos cookies e não há rastreadores. O que existe são estas chaves no
+        <code>localStorage</code> do seu navegador, todas removíveis a qualquer momento limpando os
+        dados do site:
+      </p>
+      <ul>
+        <li><code>identity</code> — crachá assinado que evita refazer o login a cada recarga.</li>
+        <li><code>displayName</code> — o apelido que você escolheu.</li>
+        <li><code>sala:&lt;id&gt;</code> — permissão de voltar a uma sala em que você já entrou, para que atualizar a página não exija digitar a senha de novo.</li>
+        <li><code>volume</code> e <code>stripW</code> — preferências de volume e largura da barra lateral.</li>
+      </ul>
+
+      <h2>5. Com quem os dados são compartilhados</h2>
+      <p>Não vendemos, alugamos nem cedemos dados a ninguém. Não há publicidade nem analytics.</p>
+      <ul>
+        <li>
+          <strong>Discord:</strong> autentica você e fornece a foto de perfil. O uso dos dados pelo
+          Discord segue a política de privacidade dele.
+        </li>
+        <li>
+          <strong>Cloudflare:</strong> transporta o tráfego entre você e o servidor, na condição de
+          provedor de rede.
+        </li>
+        <li>
+          <strong>Outras pessoas da sala:</strong> veem o seu nome, a sua foto e — se você
+          transmitir — a sua tela. Quem transmite também vê a lista de quem está assistindo.
+        </li>
+      </ul>
+      <p>
+        A sua foto de perfil é buscada pelo servidor e repassada a você, de modo que o seu navegador
+        não precisa se conectar diretamente ao Discord para exibi-la.
+      </p>
+      <p>
+        Dados podem ser divulgados se houver ordem judicial ou obrigação legal — na prática, porém,
+        não há histórico a entregar: nada é retido.
+      </p>
+
+      <h2>6. Segurança</h2>
+      <ul>
+        <li>Todo o tráfego é cifrado por HTTPS e WSS.</li>
+        <li>Senhas de sala são guardadas apenas embaralhadas, com sal individual.</li>
+        <li>Tentativas repetidas de senha são bloqueadas temporariamente.</li>
+        <li>Os crachás de acesso são assinados; um crachá adulterado é recusado.</li>
+        <li>O servidor confere de quem vem cada pedaço de vídeo antes de repassá-lo.</li>
+      </ul>
+      <p>
+        Nenhum sistema é imune a falhas. Compartilhe a tela apenas com pessoas em quem você confia, e
+        lembre-se de fechar janelas com informação sensível antes de transmitir.
+      </p>
+
+      <h2>7. Os seus direitos</h2>
+      <p>
+        A Lei Geral de Proteção de Dados (Lei 13.709/2018) garante a você o direito de confirmar,
+        acessar, corrigir e eliminar os seus dados. Como não há armazenamento persistente, o
+        exercício desses direitos é imediato:
+      </p>
+      <ul>
+        <li><strong>Eliminar:</strong> saia da sala. Quando ela esvazia, tudo que havia nela deixa de existir.</li>
+        <li><strong>Corrigir:</strong> troque o apelido pelo botão de perfil.</li>
+        <li><strong>Apagar do seu lado:</strong> limpe os dados do site no navegador.</li>
+        <li><strong>Revogar o acesso:</strong> em Configurações do Discord → Aplicativos Autorizados, remova a autorização a qualquer momento.</li>
+      </ul>
+      <p>Para qualquer pedido ou dúvida, use os contatos da seção 10.</p>
+
+      <h2>8. Menores de idade</h2>
+      <p>
+        O serviço acompanha a idade mínima do Discord: 13 anos, ou a idade maior exigida pela
+        legislação do seu país. Não coletamos dados de forma consciente de quem esteja abaixo dessa
+        idade.
+      </p>
+
+      <h2>9. Mudanças nesta política</h2>
+      <p>
+        Esta política pode ser atualizada. A data no topo indica a última alteração, e o histórico
+        completo das mudanças fica público no repositório do projeto.
+      </p>
+
+      <h2>10. Contato</h2>
+      <p>
+        Para exercer os seus direitos, relatar um problema de segurança ou tirar dúvidas sobre esta
+        política:
+      </p>
+      <ul>
+        <li>E-mail: <a href="mailto:contato@exemplo.com">contato@exemplo.com</a></li>
+        <li>
+          Repositório:
+          <a href="https://github.com/Jc007zZ/discord-screen/issues">github.com/Jc007zZ/discord-screen/issues</a>
+        </li>
+      </ul>
+
+      <footer>
+        <p><a href="/termos.html">Termos de Serviço</a> · <a href="/">Voltar</a></p>
+        <p>
+          Este projeto não é afiliado ao Discord Inc., nem patrocinado ou endossado por ele. Discord
+          é marca registrada da Discord Inc.
+        </p>
+      </footer>
+    </main>
+  </body>
+</html>

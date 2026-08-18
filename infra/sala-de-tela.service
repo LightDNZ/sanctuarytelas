@@ -1,0 +1,51 @@
+# Serviço do servidor da Sala de Tela.
+#
+# Instalar com:
+#   sudo cp infra/sala-de-tela.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now sala-de-tela
+#
+# Acompanhar:  journalctl -u sala-de-tela -f
+
+[Unit]
+Description=Sala de Tela — compartilhamento de tela para o Discord
+# network-online, e não network: o servidor consulta o Discord no arranque, e
+# subir antes da rede estar de pé vira um erro que ninguém liga ao reboot.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sala
+Group=sala
+WorkingDirectory=/opt/sala-de-tela
+
+# O caminho absoluto do node é exigência do systemd — ele não tem PATH de
+# shell. Confira o seu com "which node" se instalou por nvm ou asdf.
+ExecStart=/usr/bin/node server/index.js
+
+# O resto da configuração mora no .env, lido pelo dotenv. Só o NODE_ENV vem
+# daqui: é ele que faz o servidor recusar subir sem SESSION_SECRET, e essa
+# garantia não pode depender de alguém lembrar de editar um arquivo.
+Environment=NODE_ENV=production
+
+Restart=always
+RestartSec=3
+
+# Reiniciar não pode virar um laço infinito consumindo a máquina: cinco
+# tentativas em um minuto e ele desiste, deixando o erro visível no status em
+# vez de escondido num log que ninguém lê.
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# Endurecimento básico. Nada exótico — só fecha o que um relay de vídeo não
+# tem motivo nenhum para tocar.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# O programa escreve o build em client/dist e nada mais.
+ReadWritePaths=/opt/sala-de-tela
+
+[Install]
+WantedBy=multi-user.target
