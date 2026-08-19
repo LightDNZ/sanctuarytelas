@@ -15,6 +15,4 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
   },
-  // Permitir que o Vite leia variáveis de ambiente da pasta raiz
-  envPrefix: ['VITE_'],
 });
