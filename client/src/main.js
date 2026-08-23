@@ -1536,6 +1536,7 @@ async function showLobby() {
   $('roomSettings').hidden = true;
   $('share').hidden = true;
   $('camera').hidden = true;
+  $('copyRoomLink').hidden = true;
 
   // O dock inteiro sai de cena: todo controle dele é de dentro da sala, e o
   // cabeçalho do lobby já traz perfil e criar sala.
@@ -1707,6 +1708,7 @@ function openRoom(tokens, room) {
   $('empty').hidden = false;
   $('share').hidden = false;
   $('camera').hidden = false;
+  $('copyRoomLink').hidden = false;
   $('people').hidden = false;
   $('loginBtn').hidden = true;
 
@@ -2314,6 +2316,17 @@ $('camera').addEventListener('click', () => {
   }
 
   ligarFonte('camera');
+});
+
+$('copyRoomLink').addEventListener('click', () => {
+  if (!roomInfo) return;
+  const url = `${location.origin}/?room=${roomInfo.id}`;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = $('copyRoomLink');
+    const originalTip = btn.getAttribute('data-tip');
+    btn.setAttribute('data-tip', 'Copiado!');
+    setTimeout(() => btn.setAttribute('data-tip', originalTip), 1500);
+  });
 });
 
 /** Espelha o volume atual no botão e no cursor, sem tocar no áudio. */

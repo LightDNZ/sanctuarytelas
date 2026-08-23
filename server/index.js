@@ -15,6 +15,21 @@ import { buildAdminDashboard } from './admin.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
+// JSON logger (LOG_FORMAT=json)
+const LOG_JSON = process.env.LOG_FORMAT === 'json';
+function log(level, msg, meta = {}) {
+  if (LOG_JSON) {
+    console.log(JSON.stringify({ level, msg, ...meta, ts: new Date().toISOString() }));
+  } else {
+    const prefix = level === 'error' ? 'ERRO' : level === 'warn' ? 'AVISO' : level;
+    console[level === 'error' ? 'error' : 'log'](`[${prefix}] ${msg}`, meta);
+  }
+}
+
+function logStartup(msg, meta = {}) { log('info', msg, meta); }
+function logWarn(msg, meta = {}) { log('warn', msg, meta); }
+function logError(msg, meta = {}) { log('error', msg, meta); }
+
 // Rate limiter simples em memória (por IP)
 const RATE_LIMIT = new Map();
 function rateLimit(maxReq = 10, windowMs = 1000) {
@@ -75,12 +90,12 @@ const ADMIN_COOKIE = 'discord_screen_admin';
 // assinar todos os tokens com o padrão público, e um servidor assim de pé é
 // pior do que um servidor que não sobe.
 if (isProd && !process.env.SESSION_SECRET) {
-  console.error('ERRO: SESSION_SECRET obrigatorio em producao — sem ele os tokens sao forjaveis.');
+  logError('SESSION_SECRET obrigatorio em producao — sem ele os tokens sao forjaveis.');
   process.exit(1);
 }
 
 if (TEM_ADMIN && !process.env.SESSION_SECRET) {
-  console.error('ERRO: SESSION_SECRET obrigatorio quando o painel admin esta ligado.');
+  logError('SESSION_SECRET obrigatorio quando o painel admin esta ligado.');
   process.exit(1);
 }
 
@@ -92,22 +107,16 @@ if (TEM_ADMIN && process.env.SESSION_SECRET.length < 32) {
   // Nomeia a variavel e desmente o engano que ela ja causou: quem acabou de
   // preencher o DISCORD_ADMIN_ID le "minimo 32" e conclui que o ID do Discord,
   // de 18 digitos, e que esta curto. Nao e — sao duas variaveis diferentes.
-  console.error(
-    `ERRO: SESSION_SECRET curto demais (tem ${process.env.SESSION_SECRET.length}, precisa de 32+).`,
-  );
-  console.error('      Nao e o DISCORD_ADMIN_ID: o ID do Discord tem 18 digitos e esta certo.');
-  console.error(
-    `      Gere um: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`,
-  );
+  logError(`SESSION_SECRET curto demais (tem ${process.env.SESSION_SECRET.length}, precisa de 32+).`);
+  logError('Nao e o DISCORD_ADMIN_ID: o ID do Discord tem 18 digitos e esta certo.');
+  logError(`Gere um: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`);
   process.exit(1);
 }
 
 for (const id of ADMIN_IDS) {
   if (/^[0-9]{15,21}$/.test(id)) continue;
-  console.error(`ERRO: DISCORD_ADMIN_ID invalido: "${id}".`);
-  console.error(
-    '      Use o ID numerico da conta Discord (18 digitos). Varios: separe por virgula.',
-  );
+  logError(`DISCORD_ADMIN_ID invalido: "${id}".`);
+  logError('Use o ID numerico da conta Discord (18 digitos). Varios: separe por virgula.');
   process.exit(1);
 }
 
@@ -287,9 +296,7 @@ app.post('/api/token', rateLimit(10, 1000), async (req, res) => {
   // troca o código é este servidor. Se forem aplicações diferentes, o Discord
   // recusa — e o erro dele não diz qual das duas está errada.
   if (client_id && DISCORD_CLIENT_ID && client_id !== DISCORD_CLIENT_ID) {
-    console.error(
-      `[oauth] atividade e da aplicacao ${client_id}, mas o .env tem ${DISCORD_CLIENT_ID}`,
-    );
+    logError(`[oauth] atividade e da aplicacao ${client_id}, mas o .env tem ${DISCORD_CLIENT_ID}`);
     return res.status(409).json({
       error:
         `Esta atividade é da aplicação ${client_id}, mas o servidor está configurado ` +
@@ -300,7 +307,7 @@ app.post('/api/token', rateLimit(10, 1000), async (req, res) => {
   // Sem credencial não há troca possível, e o erro que o Discord devolve nesse
   // caso não deixa isso óbvio para ninguém. Dizer aqui poupa a caçada.
   if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET) {
-    console.error('[oauth] DISCORD_CLIENT_ID ou DISCORD_CLIENT_SECRET ausente no .env');
+    logError('[oauth] DISCORD_CLIENT_ID ou DISCORD_CLIENT_SECRET ausente no .env');
     return res.status(500).json({
       error: 'O servidor está sem as credenciais do Discord. Rode: npm run configurar',
     });
@@ -320,7 +327,7 @@ app.post('/api/token', rateLimit(10, 1000), async (req, res) => {
 
     const data = await r.json();
     if (!data.access_token) {
-      console.error('[oauth] Discord recusou a troca:', data);
+      logError('[oauth] Discord recusou a troca:', data);
       // O motivo do Discord vai junto: "invalid_client" é secret errado,
       // "invalid_grant" é código já usado ou expirado. Sem isso, quem vê a
       // tela não tem como saber qual dos dois é.
@@ -329,7 +336,7 @@ app.post('/api/token', rateLimit(10, 1000), async (req, res) => {
     }
     res.json({ access_token: data.access_token });
   } catch (err) {
-    console.error('[oauth] erro:', err);
+    logError('[oauth] erro:', err);
     res.status(500).json({ error: 'erro interno' });
   }
 });
@@ -415,7 +422,7 @@ app.post('/api/session', async (req, res) => {
       sala: issueRoomTokens(salaDela.id, comoMe),
     });
   } catch (err) {
-    console.error('[session] erro:', err);
+    logError('[session] erro:', err);
     res.status(500).json({ error: 'erro interno' });
   }
 });
@@ -527,13 +534,13 @@ async function inVoiceChannel(guildId, channelId, userId) {
       // essa pessoa neste servidor, então ela está fora da call.
       const erro = await r.json().catch(() => ({}));
       if (erro?.code === 10004) {
-        console.warn('[voz] o bot nao esta neste servidor — escopo cai para a instancia');
+        logWarn('[voz] o bot nao esta neste servidor — escopo cai para a instancia');
         return 'indisponivel';
       }
       return 'fora';
     }
     if (!r.ok) {
-      console.warn(`[voz] Discord respondeu ${r.status} — verificação ignorada`);
+      logWarn(`[voz] Discord respondeu ${r.status} — verificação ignorada`);
       return 'indisponivel';
     }
 
@@ -541,7 +548,7 @@ async function inVoiceChannel(guildId, channelId, userId) {
     return state?.channel_id === channelId ? 'ok' : 'fora';
   } catch (err) {
     // Falha de rede não pode trancar todo mundo para fora.
-    console.warn('[voz] falhou:', err.message);
+    logWarn('[voz] falhou:', err.message);
     return 'indisponivel';
   }
 }
@@ -665,7 +672,7 @@ app.post('/api/rooms/create', (req, res) => {
   });
   if (error) return res.status(400).json({ error });
 
-  console.log(`[room ${room.id}] criada por ${me.name}: "${room.name}"`);
+  logStartup(`[room ${room.id}] criada por ${me.name}: "${room.name}"`);
   res.json(issueRoomTokens(room.id, me));
 });
 
@@ -865,7 +872,7 @@ app.get('/auth/callback', async (req, res) => {
     // aparece em log de proxy. O cliente lê e limpa da barra de endereço.
     res.redirect(`/#identity=${encodeURIComponent(identity.identity)}`);
   } catch (err) {
-    console.error('[auth] erro:', err);
+    logError('[auth] erro:', err);
     res.redirect(adminFlow ? '/admin?error=interno' : '/?erro=interno');
   }
 });
@@ -1237,7 +1244,7 @@ wss.on('connection', (ws, _req, auth, fonte, controle) => {
  */
 function handleControl(ws, room, auth) {
   R.attachControl(room, ws, auth.uid);
-  console.log(`[room ${room.id}] aba de captura de ${auth.name} conectada`);
+  logStartup(`[room ${room.id}] aba de captura de ${auth.name} conectada`);
 
   R.broadcastState(room);
 
@@ -1258,9 +1265,7 @@ function handleBroadcaster(ws, room, info, fonte) {
     return;
   }
 
-  console.log(
-    `[room ${room.id}] broadcaster conectado: ${info.name} · ${fonte} (slot ${entry.slot})`,
-  );
+  logStartup(`[room ${room.id}] broadcaster conectado: ${info.name} · ${fonte} (slot ${entry.slot})`);
 
   ws.on('message', (data, isBinary) => {
     if (isBinary) {
@@ -1277,24 +1282,24 @@ function handleBroadcaster(ws, room, info, fonte) {
 
     if (msg.type === 'start') {
       R.startStream(room, entry);
-      console.log(`[room ${room.id}] stream iniciada por ${info.name}`);
+      logStartup(`[room ${room.id}] stream iniciada por ${info.name}`);
     } else if (msg.type === 'config' && msg.config) {
       R.setConfig(room, entry, msg.config);
-      console.log(`[room ${room.id}] codec de ${info.name}: ${msg.config.codec}`);
+      logStartup(`[room ${room.id}] codec de ${info.name}: ${msg.config.codec}`);
     } else if (msg.type === 'audio-config' && msg.config) {
       R.setAudioConfig(room, entry, msg.config);
-      console.log(`[room ${room.id}] audio de ${info.name}: ${msg.config.codec}`);
+      logStartup(`[room ${room.id}] audio de ${info.name}: ${msg.config.codec}`);
     } else if (msg.type === 'rtc' && typeof msg.peer === 'string' && msg.payload) {
       R.rtcParaViewer(room, entry, msg.peer, msg.payload);
     } else if (msg.type === 'stop') {
       R.stopStream(room, entry);
-      console.log(`[room ${room.id}] stream parada por ${info.name}`);
+      logStartup(`[room ${room.id}] stream parada por ${info.name}`);
     }
   });
 
   ws.on('close', () => {
     R.detachBroadcaster(room, ws);
-    console.log(`[room ${room.id}] broadcaster saiu: ${info.name}`);
+    logStartup(`[room ${room.id}] broadcaster saiu: ${info.name}`);
   });
 }
 
@@ -1355,7 +1360,7 @@ function handleViewer(ws, room, auth) {
         fonte: msg.fonte,
         opcoes: msg.opcoes,
       });
-      if (n) console.log(`[room ${room.id}] ${auth.name} pediu ${msg.fonte} à própria aba`);
+      if (n) logStartup(`[room ${room.id}] ${auth.name} pediu ${msg.fonte} à própria aba`);
       return;
     }
 
@@ -1374,9 +1379,7 @@ function handleViewer(ws, room, auth) {
 
       for (const entry of alvos) R.sendJson(entry.ws, { type: 'stop-request' });
       if (alvos.length) {
-        console.log(
-          `[room ${room.id}] parada pedida por ${auth.name}: ${alvos.map((e) => e.fonte).join(', ')}`,
-        );
+        logStartup(`[room ${room.id}] parada pedida por ${auth.name}: ${alvos.map((e) => e.fonte).join(', ')}`);
       }
     }
   });
@@ -1424,13 +1427,13 @@ wss.on('close', () => clearInterval(heartbeat));
 server.on('error', (err) => {
   if (err.code !== 'EADDRINUSE') throw err;
 
-  console.error('');
-  console.error(`  A porta ${PORT} já está sendo usada.`);
-  console.error('  Quase sempre é outra janela deste mesmo programa aberta.');
-  console.error('  Feche a outra janela e tente de novo.');
-  console.error('');
-  console.error('  Se precisar rodar os dois, mude PORT no arquivo .env.');
-  console.error('');
+  logError('');
+  logError(`  A porta ${PORT} já está sendo usada.`);
+  logError('  Quase sempre é outra janela deste mesmo programa aberta.');
+  logError('  Feche a outra janela e tente de novo.');
+  logError('');
+  logError('  Se precisar rodar os dois, mude PORT no arquivo .env.');
+  logError('');
   process.exit(1);
 });
 
@@ -1461,10 +1464,10 @@ function avisarBuildVelho() {
     );
     if (fonte <= build) return;
 
-    console.log('');
-    console.log('  Aviso: o site no ar foi montado antes da sua última mudança no código.');
-    console.log('  Pelo Discord as pessoas ainda veem a versão antiga.');
-    console.log('  Rode "npm start" para montar de novo — "npm run dev" atualiza só o 5173.');
+    logWarn('');
+    logWarn('Aviso: o site no ar foi montado antes da sua última mudança no código.');
+    logWarn('Pelo Discord as pessoas ainda veem a versão antiga.');
+    logWarn('Rode "npm start" para montar de novo — "npm run dev" atualiza só o 5173.');
   } catch {
     // Ainda sem build; o proprio arranque ja diz o que fazer.
   }
@@ -1473,45 +1476,45 @@ function avisarBuildVelho() {
 server.listen(PORT, () => {
   const local = `http://localhost:${PORT}`;
 
-  console.log('');
-  console.log(`  Sanctuary Telas no ar em  ${local}`);
-  console.log(`  Abra esse endereço no navegador para usar fora do Discord.`);
-  console.log('');
+  logStartup('');
+  logStartup(`Sanctuary Telas no ar em  ${local}`);
+  logStartup(`Abra esse endereço no navegador para usar fora do Discord.`);
+  logStartup('');
 
   if (DISCORD_CLIENT_ID) {
-    console.log(`  Discord: ligado · aplicação ${DISCORD_CLIENT_ID}`);
-    console.log(`  Endereço público: ${PUBLIC_ORIGIN}`);
-    console.log(`  Redirect que precisa estar no portal: ${PUBLIC_ORIGIN}/auth/callback`);
+    logStartup(`Discord: ligado · aplicação ${DISCORD_CLIENT_ID}`);
+    logStartup(`Endereço público: ${PUBLIC_ORIGIN}`);
+    logStartup(`Redirect que precisa estar no portal: ${PUBLIC_ORIGIN}/auth/callback`);
   } else {
-    console.log('  Discord: desligado (só navegador).');
-    console.log('  Para usar dentro do Discord, rode: npm run configurar');
+    logStartup('Discord: desligado (só navegador).');
+    logStartup('Para usar dentro do Discord, rode: npm run configurar');
   }
 
   if (TEM_ADMIN) {
-    console.log(`  Painel administrativo: ${local}/admin`);
-    if (PUBLIC_ORIGIN !== local) console.log(`  Painel publico: ${PUBLIC_ORIGIN}/admin`);
+    logStartup(`Painel administrativo: ${local}/admin`);
+    if (PUBLIC_ORIGIN !== local) logStartup(`Painel publico: ${PUBLIC_ORIGIN}/admin`);
   } else {
-    console.log('  Painel administrativo: desligado (defina DISCORD_ADMIN_ID no .env).');
+    logStartup('Painel administrativo: desligado (defina DISCORD_ADMIN_ID no .env).');
   }
 
   // Erro fácil de cometer e difícil de diagnosticar: com PUBLIC_ORIGIN
   // apontando para o proxy, a página de captura abre dentro do sandbox do
   // Discord e getDisplayMedia volta a ser bloqueado.
   if (PUBLIC_ORIGIN.includes('discordsays.com')) {
-    console.error('');
-    console.error('  ERRO: o endereço público aponta para o proxy do Discord.');
-    console.error('  A tela de captura precisa abrir fora do Discord, senão a');
-    console.error('  captura é bloqueada. Rode: npm run tunel');
+    logError('');
+    logError('ERRO: o endereço público aponta para o proxy do Discord.');
+    logError('A tela de captura precisa abrir fora do Discord, senão a');
+    logError('captura é bloqueada. Rode: npm run tunel');
   }
 
   avisarBuildVelho();
 
   if (DISCORD_CLIENT_ID && PUBLIC_ORIGIN.startsWith('http://localhost')) {
-    console.log('');
-    console.log('  Aviso: o Discord não alcança localhost. Rode: npm run tunel');
+    logWarn('');
+    logWarn('Aviso: o Discord não alcança localhost. Rode: npm run tunel');
   }
 
-  console.log('');
+  logStartup('');
 });
 
 /**
