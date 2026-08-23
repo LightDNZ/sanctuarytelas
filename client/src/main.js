@@ -358,7 +358,6 @@ function renderGrid() {
   // e não do clique, porque o palco também entra em tela cheia pelo clique no
   // tile — dois caminhos, um lugar só para avisar.
   const podeIrAoSite = inDiscord && noPalco && Boolean(origemDoSite());
-  $('watchSite').hidden = !podeIrAoSite;
 
   if (!hasPeople) return;
 
@@ -2250,26 +2249,7 @@ function urlDoSite(origem) {
   return url.toString();
 }
 
-async function abrirNoSite() {
-  const origem = roomTokens && origemDoSite();
-  if (!origem) return;
-  const url = urlDoSite(origem);
 
-  if (!inDiscord) {
-    window.open(url, '_blank', 'noopener');
-    return;
-  }
-
-  try {
-    const res = await sdk.commands.openExternalLink({ url });
-    // Clientes antigos devolvem null; só false é recusa explícita.
-    if (res?.opened === false) toast('Você recusou abrir o link.', true);
-  } catch (err) {
-    toast(`Não foi possível abrir o link: ${err.message}`, true);
-  }
-}
-
-$('watchSite').addEventListener('click', abrirNoSite);
 
 /**
  * Encerra a minha transmissão, tenha ela nascido aqui ou na aba externa.
