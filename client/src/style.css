@@ -1397,3 +1397,54 @@ button {
   border-color: var(--danger);
   color: #ffb3b6;
 }
+
+/* ------------------------------------------------------------------- stats overlay */
+
+.stats-overlay {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  min-width: 180px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--text);
+  font-family: ui-monospace, monospace;
+}
+
+.stats-overlay.hidden {
+  display: none !important;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stats-row strong {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Verde/vermelho para valores bons/ruins */
+.stats-row strong.ok { color: var(--live); }
+.stats-row strong.warn { color: #f0b232; }
+.stats-row strong.bad { color: var(--danger); }
+
+@media (max-width: 620px) {
+  .stats-overlay {
+    top: 8px;
+    right: 8px;
+    left: 8px;
+    min-width: auto;
+  }
+}

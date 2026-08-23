@@ -1189,6 +1189,11 @@ function ensureStatsTimer() {
       resumoPeer(s.pc).then(({ rtt, relay }) => {
         if (!s.viaRtc) return;
         $('pLag').textContent = rtt === null ? '—' : `${rtt} ms${relay ? ' · TURN' : ''}`;
+        // dropped frames
+        const q = s.video.getVideoPlaybackQuality?.();
+        const dropped = q ? q.droppedVideoFrames - (s.droppedAntes ?? q.droppedVideoFrames) : 0;
+        if (q) s.droppedAntes = q.droppedVideoFrames;
+        updateOverlay({ rtt, relay, via: 'WebRTC (direto)', res: m.w ? `${m.w}×${m.h}` : '—', fps: quadrosDoVideo(s), dropped });
       });
     } else {
       $('pVia').textContent = s.pc ? 'relay (negociando direto…)' : 'relay (WebSocket)';
@@ -1200,6 +1205,8 @@ function ensureStatsTimer() {
       // capturados e o ritmo em que eles chegaram.
       const j = s.player.getJitter();
       $('pJitter').textContent = j === null ? '—' : `${j} ms`;
+      const bw = s.player.getBandwidth?.();
+      updateOverlay({ rtt: s.player.getLag(), relay: false, via: s.pc ? 'relay (negociando…)' : 'relay (WebSocket)', res: s.player.getSizes().video, fps: `${s.player.takeFrameCount()} fps`, bitrate: bw ? `${(bw / 1e6).toFixed(1)} Mb/s` : '—', jitter: j });
     }
 
     // Quatro estados diferentes que, sem isto, parecem todos "sem som".
@@ -1213,6 +1220,55 @@ function ensureStatsTimer() {
     else if (volume === 0) $('pSom').textContent = 'silenciado aqui';
     else $('pSom').textContent = `tocando · ${Math.round(volume * 100)}%`;
   }, 1000);
+}
+
+function updateOverlay(data) {
+  const overlay = $('statsOverlay');
+  if (!overlay || overlay.hidden) return;
+
+  // Ping
+  const oPing = $('oPing');
+  if (oPing) {
+    const rtt = data.rtt;
+    if (rtt === null || rtt === undefined) {
+      oPing.textContent = '—';
+      oPing.className = '';
+    } else {
+      oPing.textContent = `${rtt} ms${data.relay ? ' · TURN' : ''}`;
+      oPing.className = rtt < 80 ? 'ok' : rtt < 150 ? 'warn' : 'bad';
+    }
+  }
+
+  // Bitrate (passado no data)
+  const oBitrate = $('oBitrate');
+  if (oBitrate && data.bitrate) {
+    oBitrate.textContent = data.bitrate;
+  }
+
+  // Resolução
+  const oRes = $('oRes');
+  if (oRes && data.res) {
+    oRes.textContent = data.res;
+  }
+
+  // FPS
+  const oFps = $('oFps');
+  if (oFps && data.fps) {
+    oFps.textContent = data.fps;
+  }
+
+  // Descartados (apenas WebRTC)
+  const oDropped = $('oDropped');
+  if (oDropped && data.dropped !== undefined) {
+    oDropped.textContent = data.dropped > 0 ? `${data.dropped}` : '0';
+    oDropped.className = data.dropped > 0 ? 'bad' : 'ok';
+  }
+
+  // Transporte
+  const oVia = $('oVia');
+  if (oVia && data.via) {
+    oVia.textContent = data.via;
+  }
 }
 
 /**
@@ -1229,6 +1285,14 @@ window.addEventListener('keydown', (e) => {
   const painel = $('panel');
   painel.hidden = !painel.hidden;
   if (!painel.hidden) ensureStatsTimer();
+});
+
+// Overlay de stats (tecla I)
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'KeyI' || e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
+  e.preventDefault();
+  const overlay = $('statsOverlay');
+  if (overlay) overlay.hidden = !overlay.hidden;
 });
 
 // ------------------------------------------------------------------- arranque

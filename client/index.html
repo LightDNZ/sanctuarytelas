@@ -109,6 +109,16 @@
           <button id="probe" class="panel-btn">Testar captura no iframe</button>
         </div>
 
+        <!-- Overlay de stats (toggle com tecla I) -->
+        <div id="statsOverlay" class="stats-overlay" hidden>
+          <div class="stats-row"><span>Ping</span><strong id="oPing">—</strong></div>
+          <div class="stats-row"><span>Bitrate</span><strong id="oBitrate">—</strong></div>
+          <div class="stats-row"><span>Resolução</span><strong id="oRes">—</strong></div>
+          <div class="stats-row"><span>FPS</span><strong id="oFps">—</strong></div>
+          <div class="stats-row"><span>Descartados</span><strong id="oDropped">—</strong></div>
+          <div class="stats-row"><span>Transporte</span><strong id="oVia">—</strong></div>
+        </div>
+
         <div class="dock">
           <div class="group">
             <button id="share" class="btn" data-tip="Compartilhar tela" aria-label="Compartilhar tela">

@@ -15,6 +15,33 @@ import { buildAdminDashboard } from './admin.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
+// Rate limiter simples em memória (por IP)
+const RATE_LIMIT = new Map();
+function rateLimit(maxReq = 10, windowMs = 1000) {
+  return (req, res, next) => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const key = `${ip}:${req.path}`;
+    const entry = RATE_LIMIT.get(key);
+    if (entry && now - entry.resetAt < windowMs) {
+      entry.count++;
+      if (entry.count > maxReq) {
+        res.set('Retry-After', Math.ceil((entry.resetAt + windowMs - now) / 1000));
+        return res.status(429).json({ error: 'rate_limited', retryAfter: Math.ceil((entry.resetAt + windowMs - now) / 1000) });
+      }
+    } else {
+      RATE_LIMIT.set(key, { count: 1, resetAt: now });
+    }
+    // Limpa entradas velhas a cada 1000 requests
+    if (RATE_LIMIT.size > 10000) {
+      for (const [k, v] of RATE_LIMIT) {
+        if (now - v.resetAt > windowMs * 2) RATE_LIMIT.delete(k);
+      }
+    }
+    next();
+  };
+}
+
 const {
   DISCORD_CLIENT_ID,
   DISCORD_CLIENT_SECRET,
@@ -252,7 +279,7 @@ app.use(
 // ------------------------------------------------------------------ OAuth
 
 /** Troca o code do OAuth pelo access_token. O secret nunca sai do servidor. */
-app.post('/api/token', async (req, res) => {
+app.post('/api/token', rateLimit(10, 1000), async (req, res) => {
   const { code, client_id } = req.body ?? {};
   if (!code) return res.status(400).json({ error: 'code obrigatorio' });
 
@@ -857,7 +884,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
  * Sem TURN configurado ninguém fica sem transmissão: quem não conseguir fechar
  * a conexão direta continua vendo pelo relay, que nunca foi desligado.
  */
-app.get('/api/ice', (_req, res) => {
+app.get('/api/ice', rateLimit(10, 1000), (_req, res) => {
   const iceServers = [{ urls: 'stun:stun.l.google.com:19302' }];
 
   if (TURN_URL) {
