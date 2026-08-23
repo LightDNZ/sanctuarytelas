@@ -58,9 +58,52 @@ function apenasDiscord(req, res, next) {
     referer.includes('discord.com') || referer.includes('discordsays.com');
 
   if (!vemDoDiscord) {
-    return res.status(403).send(
-      '<h1>403 - Acesso restrito</h1><p>Esta aplicação só pode ser acessada através da atividade do Discord.</p>'
-    );
+    return res.status(403).send(`
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>403 - Acesso Restrito</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+    img {
+      max-width: 100%;
+      width: 600px;
+      height: auto;
+      margin-bottom: 2rem;
+    }
+    h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 0.25rem; }
+    .meme { color: #0f0; font-weight: bold; margin-top: 1.5rem; font-size: 1.3rem; }
+    @media (max-width: 640px) {
+      img { width: 100%; }
+      h1 { font-size: 1.8rem; }
+      p { font-size: 1rem; }
+      .meme { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+  <img src="/403.jpg" alt="403">
+  <h1>403 - Acesso Restrito</h1>
+  <p>Esta aplicação só pode ser acessada através da atividade do Discord.</p>
+  <p class="meme">KKKKKKKKKK pega nois janja #pjl</p>
+</body>
+</html>
+    `);
   }
   next();
 }
