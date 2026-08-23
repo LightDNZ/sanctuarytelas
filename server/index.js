@@ -1000,6 +1000,14 @@ app.get('/metrics', requireAdmin, (_req, res) => {
   const system = systemSnapshot();
   const wsClients = wss.clients.size;
 
+  // Compute summary from rooms (adminStats doesn't include summary)
+  const users = stats.rooms.reduce((sum, r) => sum + (r.users?.length ?? 0), 0);
+  const connections = stats.rooms.reduce((sum, r) => sum + (r.connections ?? 0), 0);
+  const viewers = stats.rooms.reduce((sum, r) => sum + (r.viewers ?? 0), 0);
+  const broadcasters = stats.rooms.reduce((sum, r) => sum + (r.broadcasters ?? 0), 0);
+  const activeWatchers = stats.rooms.reduce((sum, r) => sum + r.streams.reduce((s, st) => s + (st.watchers ?? 0), 0), 0);
+  const streams = stats.rooms.reduce((sum, r) => sum + (r.streams?.length ?? 0), 0);
+
   const lines = [
     '# HELP sanctuary_up Server is up',
     '# TYPE sanctuary_up gauge',
@@ -1015,27 +1023,27 @@ app.get('/metrics', requireAdmin, (_req, res) => {
     '',
     '# HELP sanctuary_users_total Total connected users',
     '# TYPE sanctuary_users_total gauge',
-    `sanctuary_users_total ${stats.summary.users}`,
+    `sanctuary_users_total ${users}`,
     '',
     '# HELP sanctuary_connections_total Total WebSocket connections',
     '# TYPE sanctuary_connections_total gauge',
-    `sanctuary_connections_total ${stats.summary.connections}`,
+    `sanctuary_connections_total ${connections}`,
     '',
     '# HELP sanctuary_viewers_total Total viewers (non-broadcasters)',
     '# TYPE sanctuary_viewers_total gauge',
-    `sanctuary_viewers_total ${stats.summary.viewerConnections}`,
+    `sanctuary_viewers_total ${viewers}`,
     '',
     '# HELP sanctuary_broadcasters_total Total broadcasters',
     '# TYPE sanctuary_broadcasters_total gauge',
-    `sanctuary_broadcasters_total ${stats.summary.broadcasterConnections}`,
+    `sanctuary_broadcasters_total ${broadcasters}`,
     '',
     '# HELP sanctuary_active_watchers_total Total active watchers across all streams',
     '# TYPE sanctuary_active_watchers_total gauge',
-    `sanctuary_active_watchers_total ${stats.summary.activeWatchers}`,
+    `sanctuary_active_watchers_total ${activeWatchers}`,
     '',
     '# HELP sanctuary_streams_total Total active streams',
     '# TYPE sanctuary_streams_total gauge',
-    `sanctuary_streams_total ${stats.summary.streams}`,
+    `sanctuary_streams_total ${streams}`,
     '',
     '# HELP sanctuary_guilds_total Total guilds (Discord servers) with activity',
     '# TYPE sanctuary_guilds_total gauge',
