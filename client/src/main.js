@@ -1235,7 +1235,7 @@ function updateOverlay(data) {
       oPing.className = '';
     } else {
       oPing.textContent = `${rtt} ms${data.relay ? ' · TURN' : ''}`;
-      oPing.className = rtt < 80 ? 'ok' : rtt < 150 ? 'warn' : 'bad';
+      oPing.className = rtt < 150 ? 'ok' : rtt < 250 ? 'warn' : 'bad';
     }
   }
 
