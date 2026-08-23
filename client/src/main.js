@@ -218,6 +218,20 @@ const STRIP_DEFAULT = 300;
 const STRIP_MIN = 200;
 let stripW = Number(read('stripW')) || STRIP_DEFAULT;
 
+/**
+ * Lateral recolhida: guardada no navegador.
+ * true = recolhida, false = expandida.
+ */
+let sidebarCollapsed = read('sidebarCollapsed') === 'true';
+
+/**
+ * Fullscreen API ativo: true quando a Fullscreen API do navegador está ativa
+ * (diferente do modo "cheia" interno que só expande o tile).
+ */
+let fullscreenAPI = false;
+
+const fullscreenEl = document.documentElement;
+
 const divider = document.createElement('div');
 divider.className = 'divider';
 divider.title = 'Arraste para redimensionar · duplo clique restaura';
@@ -239,6 +253,110 @@ function setStrip(px) {
   applyStrip();
   store('stripW', String(stripW));
 }
+
+divider.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  divider.classList.add('dragging');
+
+  // Os ouvintes vão na janela, não no divisor: a grade é reconstruída a cada
+  // mudança de estado da sala, e o arrasto não pode morrer no meio disso.
+  // 21px = os 16 de padding da grade mais a meia largura do divisor.
+  const move = (ev) => setStrip($('grid').getBoundingClientRect().right - ev.clientX - 21);
+  const up = () => {
+    divider.classList.remove('dragging');
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+  };
+
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+});
+
+/**
+ * Alterna a lateral recolhida/expandida.
+ */
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  store('sidebarCollapsed', String(sidebarCollapsed));
+  applySidebarState();
+}
+
+/**
+ * Aplica o estado da lateral recolhida/expandida.
+ */
+function applySidebarState() {
+  const sidebar = document.querySelector('.sidebar');
+  const dockTab = $('dockTab');
+  if (!sidebar) return;
+
+  sidebar.dataset.collapsed = sidebarCollapsed ? 'true' : 'false';
+  const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+  if (toggleBtn) {
+    toggleBtn.setAttribute('aria-expanded', String(!sidebarCollapsed));
+    toggleBtn.setAttribute('aria-label', sidebarCollapsed ? 'Expandir lateral' : 'Recolher lateral');
+    toggleBtn.setAttribute('data-tip', sidebarCollapsed ? 'Expandir lateral' : 'Recolher lateral');
+    toggleBtn.innerHTML = sidebarCollapsed
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+  }
+  dockTab.hidden = !sidebarCollapsed;
+
+  // Atualiza a largura da grade
+  applyStrip();
+}
+
+/**
+ * Entra na Fullscreen API do navegador.
+ */
+async function enterFullscreenAPI() {
+  if (fullscreenAPI) return;
+  try {
+    await fullscreenEl.requestFullscreen({ navigationUI: 'hide' });
+    fullscreenAPI = true;
+    document.body.classList.add('fullscreen-api');
+    renderGrid(); // Re-render para esconder lateral no fullscreen
+  } catch (e) {
+    // Falhou (ex: iframe sem permissão) — fica no modo interno
+    console.info('[fullscreen] API negada, usando modo interno:', e.message);
+  }
+}
+
+/**
+ * Sai da Fullscreen API do navegador.
+ */
+async function exitFullscreenAPI() {
+  if (!fullscreenAPI) return;
+  try {
+    await document.exitFullscreen();
+    fullscreenAPI = false;
+    document.body.classList.remove('fullscreen-api');
+    renderGrid(); // Re-render para restaurar lateral
+  } catch (e) {
+    console.warn('[fullscreen] Erro ao sair:', e);
+  }
+}
+
+/**
+ * Alterna Fullscreen API.
+ */
+async function toggleFullscreenAPI() {
+  if (fullscreenAPI) {
+    await exitFullscreenAPI();
+  } else {
+    await enterFullscreenAPI();
+  }
+}
+
+/**
+ * Sincroniza estado quando sai do fullscreen (Esc, gesto, etc).
+ */
+document.addEventListener('fullscreenchange', () => {
+  if (fullscreenAPI && !document.fullscreenElement) {
+    fullscreenAPI = false;
+    document.body.classList.remove('fullscreen-api');
+    renderGrid();
+  }
+});
 
 divider.addEventListener('pointerdown', (e) => {
   e.preventDefault();
@@ -407,25 +525,47 @@ function renderGrid() {
 function buildSidebar() {
   const barra = document.createElement('aside');
   barra.className = 'sidebar';
+  barra.dataset.collapsed = 'false';
+
+  // Sidebar header with toggle
+  const header = document.createElement('div');
+  header.className = 'sidebar-header';
+  header.innerHTML = `
+    <div class="sidebar-title">Telas</div>
+    <button class="sidebar-toggle" aria-label="Recolher lateral" aria-expanded="true" data-tip="Recolher lateral">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+  `;
+  barra.append(header);
+
+  // Sidebar content wrapper (for collapsing)
+  const content = document.createElement('div');
+  content.className = 'sidebar-content';
 
   // Por transmissão, e não por pessoa: quem divide tela e câmera tem duas
   // miniaturas aqui, e a que está no palco é a única que não se repete.
   const outras = entradasDoGrid().filter((e) => e.slot !== null && e.slot !== activeSlot);
   if (outras.length) {
-    barra.append(secaoTitulo(outras.length === 1 ? 'Outra transmissão' : 'Outras transmissões'));
-    for (const e of outras) barra.append(buildTile(e.p, { slot: e.slot }).el);
+    content.append(secaoTitulo(outras.length === 1 ? 'Outra transmissão' : 'Outras transmissões'));
+    for (const e of outras) content.append(buildTile(e.p, { slot: e.slot }).el);
   }
 
-  barra.append(contagemPessoas());
+  content.append(contagemPessoas());
 
   // semVideo é obrigatório aqui: o canvas de cada transmissão é um nó de DOM
   // só, e anexá-lo neste tile o arrancaria do palco — que ficaria preto
   // enquanto a miniatura ao lado mostrava a tela.
+  // Não repete quem já está no palco (dono do activeSlot).
+  const donoNoPalco = activeSlot !== null ? available.get(activeSlot)?.userId : null;
   const gente = document.createElement('div');
   gente.className = 'sidebar-people';
-  for (const p of participants) gente.append(buildTile(p, { semVideo: true }).el);
-  barra.append(gente);
+  for (const p of participants) {
+    if (p.id === donoNoPalco) continue; // Não repete quem está no palco
+    gente.append(buildTile(p, { semVideo: true }).el);
+  }
+  content.append(gente);
 
+  barra.append(content);
   return barra;
 }
 
@@ -488,9 +628,16 @@ function buildTile(p, { palco = false, semVideo = false, slot: slotDado = null }
   // Sem rótulo, dois tiles da mesma pessoa lado a lado no grid não se
   // distinguem até alguém clicar em um deles.
   if (slot !== null && available.get(slot)?.fonte === 'camera') {
+    // Conta quantas câmeras essa pessoa já tem para numerar
+    const camerasDaPessoa = [...available.values()].filter(
+      (a) => a.userId === p.id && a.fonte === 'camera'
+    ).length;
+    const idx = [...available.values()].filter(
+      (a) => a.userId === p.id && a.fonte === 'camera'
+    ).findIndex((a) => a === available.get(slot));
     const marca = document.createElement('span');
     marca.className = 'tile-fonte';
-    marca.textContent = 'Câmera';
+    marca.textContent = camerasDaPessoa > 1 ? `Câmera ${idx + 1}` : 'Câmera';
     tile.append(marca);
   }
 
@@ -549,7 +696,8 @@ function buildTile(p, { palco = false, semVideo = false, slot: slotDado = null }
     dot.className = 'dot';
     badge.append(dot);
   }
-  badge.append(document.createTextNode(p.name));
+  const displayName = p.name ?? 'Participante';
+  badge.append(document.createTextNode(displayName));
   footer.append(badge);
 
   if (slot !== null) footer.append(buildWatchers(slot));
@@ -1323,6 +1471,23 @@ async function boot() {
   clearTimeout(vigia);
 
   renderProfileButton();
+
+  // Aplica estado inicial da lateral
+  applySidebarState();
+
+  // Event listeners para o sidebar toggle
+  document.addEventListener('click', (e) => {
+    const toggleBtn = e.target.closest('.sidebar-toggle');
+    if (toggleBtn) {
+      e.preventDefault();
+      toggleSidebar();
+    }
+    const dockTabBtn = e.target.closest('#dockTabBtn');
+    if (dockTabBtn) {
+      e.preventDefault();
+      toggleSidebar();
+    }
+  });
 
   // Dentro do Discord não existe lobby: a atividade já É a sala daquela call, e
   // oferecer uma lista de salas ali seria oferecer uma escolha entre uma opção.
@@ -2511,6 +2676,11 @@ acordarBarras();
 $('fullscreen').addEventListener('click', () => {
   if (activeSlot === null) return;
   telaCheia = !telaCheia;
+  if (telaCheia) {
+    enterFullscreenAPI();
+  } else {
+    exitFullscreenAPI();
+  }
   renderGrid();
 });
 
@@ -2528,6 +2698,7 @@ window.addEventListener('keydown', (e) => {
   // Esc sai da tela cheia — é o reflexo de todo mundo.
   if (telaCheia) {
     telaCheia = false;
+    exitFullscreenAPI();
     renderGrid();
   }
 });

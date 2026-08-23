@@ -121,6 +121,82 @@ body {
   border-radius: 0;
 }
 
+/* Fullscreen API integration */
+#app.fullscreen-api .grid.palco:not(.cheia) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#app.fullscreen-api .grid.palco:not(.cheia) .sidebar {
+  display: none;
+}
+
+#app.fullscreen-api .grid.palco:not(.cheia) .divider {
+  display: none;
+}
+
+/* Minimal controls in fullscreen */
+#app.fullscreen-api .bottombar {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  left: auto;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 30;
+}
+
+#app.fullscreen-api .bottombar .dock {
+  gap: 6px;
+}
+
+#app.fullscreen-api .bottombar .group {
+  padding: 4px;
+  gap: 4px;
+}
+
+#app.fullscreen-api .bottombar .btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+}
+
+#app.fullscreen-api .bottombar .btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Reserve space at bottom in fullscreen for controls */
+#app.fullscreen-api .grid.palco:not(.cheia) .tile-palco {
+  padding-bottom: 72px;
+}
+
+@media (max-width: 620px) {
+  #app.fullscreen-api .bottombar {
+    bottom: 8px;
+    right: 8px;
+    left: 8px;
+    padding: 6px;
+    border-radius: 8px;
+  }
+  #app.fullscreen-api .bottombar .btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+  #app.fullscreen-api .bottombar .btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  #app.fullscreen-api .grid.palco:not(.cheia) .tile-palco {
+    padding-bottom: 68px;
+  }
+}
+
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -129,6 +205,118 @@ body {
   overflow-y: auto;
   /* Chegar ao fim da barra não pode rolar o que está atrás dela. */
   overscroll-behavior: contain;
+  transition: width 0.2s ease, opacity 0.2s ease;
+}
+
+.sidebar[data-collapsed="true"] {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  border-right: none;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px 4px;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.sidebar-toggle svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sidebar-content {
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar[data-collapsed="true"] .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Dock tab (when sidebar is collapsed) */
+.dock-tab {
+  position: fixed;
+  left: 12px;
+  bottom: 88px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dock-tab-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: background 0.15s, transform 0.15s;
+  border: 1px solid var(--line);
+}
+
+.dock-tab-btn:hover {
+  background: rgba(0, 0, 0, 0.85);
+  transform: scale(1.05);
+}
+
+.dock-tab-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 620px) {
+  .dock-tab {
+    left: 8px;
+    bottom: 80px;
+  }
+  .dock-tab-btn {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .sidebar-title {
