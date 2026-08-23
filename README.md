@@ -1,246 +1,314 @@
 # Sanctuary Telas
 
-Mostre sua tela para quem está na mesma call do Discord.
-Uma pessoa compartilha, todo mundo assiste sem sair do Discord.
+Compartilhamento de tela com áudio para o Discord — roda como Activity dentro de canais de voz ou como site standalone.
 
-Também funciona como site normal, fora do Discord, com salas que você cria e
-compartilha por link.
+## Visão geral
 
----
+- **Activity do Discord**: abre direto no canal de voz (ícone 🚀), sem lista de salas — quem entra cai na sala daquela call.
+- **Site standalone**: `https://seu-dominio.com` — lobby com lista de salas, criação de salas públicas/privadas, convite por link.
+- **Relay WebSocket**: vídeo/audio passam pelo servidor (não é P2P puro), o que permite fallback via TURN e controle de banda.
+- **Sem banco de dados**: tudo em memória (salas, usuários, tokens). Quando a sala esvazia, some em ~12s.
+- **Privacidade**: nada é gravado. Vídeo/áudio passam pelo servidor apenas em trânsito.
 
-## O que você precisa antes
+## Requisitos
 
-**1. Node.js** — é o programa que faz tudo isso rodar.
+- **Node.js 22+** (usa `fetch` nativo, `--watch`, ES modules)
+- **Navegador compatível** para compartilhar: Chrome, Edge, Brave, Opera (precisa `getDisplayMedia`)
+- **Para assistir**: qualquer navegador moderno
+- **Celular**: não funciona para *compartilhar* (limitação do navegador). Assistir costuma falhar.
 
-Baixe em [nodejs.org](https://nodejs.org), escolha a versão **LTS** e instale
-clicando em avançar até o fim. Não precisa configurar nada.
+## Instalação rápida (desenvolvimento)
 
-**2. Google Chrome, Edge, Brave ou Opera** — só para quem vai *mostrar* a tela.
-Para *assistir*, qualquer navegador serve.
+```bash
+# 1. Clone e entre na pasta
+git clone https://github.com/LightDNZ/sanctuarytelas.git
+cd sanctuarytelas
 
-> Não funciona no celular para compartilhar. Celular não deixa nenhum site
-> capturar a tela. Assistir pelo celular também costuma falhar.
-
----
-
-## Ligar tudo (um comando)
-
-**1.** Baixe este projeto e descompacte numa pasta.
-
-**2.** Abra a pasta, clique na barra de endereço do explorador de arquivos,
-digite `cmd` e aperte Enter. Vai abrir uma janela preta — é ali que você digita
-os comandos.
-
-**3.** Digite, um de cada vez, esperando cada um terminar:
-
-```
+# 2. Instale dependências
 npm install
+
+# 3. Configure (roda assistente interativo)
+npm run configurar
+# - Escolha "Só no navegador" para testar localmente
+# - Ou "Dentro do Discord" e siga o passo a passo do portal
+
+# 4. Suba tudo (build + túnel + servidor)
 npm run start:fast
+# Abre http://localhost:3001
 ```
 
-E pronto. Esse segundo comando faz tudo sozinho: se faltar alguma configuração
-ele pergunta na hora, depois monta o site, abre o endereço público e liga o
-servidor. **Uma janela só.**
+## Comandos principais
 
-Na primeira vez ele baixa o `cloudflared` (uns 50 MB) e guarda em `.cache/`
-dentro da pasta do projeto. Você não instala nada à mão.
+| Comando | Descrição |
+|---------|-----------|
+| `npm install` | Baixa dependências (só na 1ª vez) |
+| `npm run configurar` | Assistente interativo (credenciais Discord, túnel, etc.) |
+| `npm run start:fast` | **Liga tudo**: configura se precisar, builda, abre túnel, sobe servidor |
+| `npm run tunel` | Abre túnel Cloudflare descartável (endereço novo a cada vez) |
+| `npm run tunel:criar` | **Uma vez só**: cria túnel fixo na Cloudflare (DNS próprio, não muda mais) |
+| `npm start` | Build + servidor (sem túnel) — para produção atrás de proxy |
+| `npm run dev` | Dev mode: Vite + servidor + túnel, hot reload |
+| `npm run dev:rapido` | Dev mode com túnel descartável, sem mexer no `.env` |
+| `npm run build` | Builda só o client (Vite) |
+| `npm run smoke` | Teste rápido de integração (healthcheck, WS, auth) |
 
-Para desligar, aperte `Ctrl + C` na janela preta. Isso derruba tudo junto.
+## Uso no Discord (Activity)
 
-### Só quero testar no navegador
+1. No portal: https://discord.com/developers/applications
+2. **New Application** → nome → confirmar
+3. **OAuth2** → copie **Client ID** e **Client Secret** (Reset Secret para ver)
+3. **Activities** → Settings → **Enable Activities**
+4. **URL Mappings** → Add Mapping:
+   - Prefix: `/`
+   - Target: `seu-dominio.com` (sem `https://`)
+5. **OAuth2 → Redirects** → Add Redirect:
+   - `https://seu-dominio.com/auth/callback`
+6. **Save Changes**
+7. Instale no servidor: abra `https://discord.com/oauth2/authorize?client_id=SEU_CLIENT_ID`
+8. No Discord: canal de voz → ícone 🚀 → escolha a Activity
 
-Se ele perguntar como você quer usar, escolha a opção **sem Discord**. Aí é só
-abrir <http://localhost:3001> em duas janelas, criar uma sala numa, entrar pela
-outra e clicar em **Compartilhar tela** — você vê sua própria tela chegando do
-outro lado.
+### Endereço fixo (recomendado)
 
----
+Por padrão o túnel Cloudflare é descartável (muda a cada reinício). Para fixar:
 
-## Usar dentro do Discord
-
-O Discord exige que você registre o programa no site dele. É uma vez só.
-
-Quando o `npm run start:fast` pedir, ele vai te dizer exatamente onde achar cada
-valor no site do Discord, e no fim mostra **as coisas para colar lá**, já
-preenchidas com os seus dados. Faça o que ele mandar.
-
-Depois, no Discord: entre num canal de voz, clique no **foguete** 🚀 na barra de
-baixo e escolha a atividade.
-
-Dentro do Discord não existe lista de salas: quem abre a atividade cai direto na
-sala daquela call, junto com o resto do pessoal que está lá.
-
-### O endereço que muda toda vez
-
-Por padrão o endereço público é descartável: **ele muda toda vez que você
-desliga e liga o programa**. E aí a atividade para de abrir, até você ir no site
-do Discord trocar o *Target* pelo endereço novo.
-
-Para acabar com isso de vez, rode **uma única vez**:
-
-```
+```bash
 npm run tunel:criar
+# Abre login Cloudflare → escolha domínio → cria túnel + DNS → escreve .env
 ```
 
-Ele abre o login da Cloudflare no navegador, cria um endereço fixo, aponta o DNS
-e já deixa tudo escrito na configuração. Depois disso o endereço nunca mais
-muda, e você não mexe no site do Discord de novo.
+Depois disso o endereço **nunca mais muda** e você não mexe mais no portal do Discord.
 
-> Precisa de um domínio seu já na Cloudflare. Se não tiver, siga com o
-> descartável mesmo — só lembre de atualizar o *Target* quando reiniciar.
+## Deploy em produção (VPS)
 
----
+### 1. Servidor (Ubuntu 24.04)
 
-## Painel administrativo
+```bash
+# Node 22
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs git
 
-O painel mostra em tempo real pessoas e servidores conectados, salas,
-transmissões, banda usada pelo relay, ping, descartes, CPU, memória, disco e
-informações do processo/container.
+# Usuário dedicado
+sudo adduser --system --group --home /opt/sanctuarytelas sanctuarytelas
 
-Ative o modo de desenvolvedor no Discord, clique com o botão direito na sua
-conta e use **Copiar ID do usuário**. Depois acrescente ao `.env`:
+# Código
+sudo -u sanctuarytelas git clone https://github.com/LightDNZ/sanctuarytelas.git /opt/sanctuarytelas
+cd /opt/sanctuarytelas
+sudo -u sanctuarytelas npm ci
+sudo -u sanctuarytelas npm run build
+
+# Config
+sudo -u sanctuarytelas npm run configurar
+# Preencha .env com:
+# NODE_ENV=production
+# PUBLIC_ORIGIN=https://seu-dominio.com
+# SESSION_SECRET=... (gerado pelo configurar)
+# DISCORD_CLIENT_ID=...
+# DISCORD_CLIENT_SECRET=...
+# DISCORD_BOT_TOKEN=... (opcional, para verificação de voz)
+sudo chmod 600 /opt/sanctuarytelas/.env
+sudo chown sanctuarytelas:sanctuarytelas /opt/sanctuarytelas/.env
+
+# Systemd
+sudo cp infra/sanctuarytelas.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now sanctuarytelas
+systemctl status sanctuarytelas
+
+# Caddy (HTTPS automático)
+sudo apt install -y caddy
+sudo cp infra/Caddyfile /etc/caddy/Caddyfile
+# Edite /etc/caddy/Caddyfile → troque o domínio
+sudo systemctl reload caddy
+
+# Firewall
+sudo ufw allow OpenSSH
+sudo ufw allow 80,443/tcp
+sudo ufw enable
+```
+
+### 2. Discord (produção)
+
+No portal do Discord, aponte para `https://seu-dominio.com`:
+- **Activities → URL Mappings**: Prefix `/`, Target `seu-dominio.com`
+- **OAuth2 → Redirects**: `https://seu-dominio.com/auth/callback`
+
+### 3. Atualizar
+
+```bash
+cd /opt/sanctuarytelas
+sudo -u sanctuarytelas git pull
+sudo -u sanctuarytelas npm ci
+sudo -u sanctuarytelas npm run build
+sudo systemctl restart sanctuarytelas
+```
+
+### 4. Logs e troubleshooting
+
+```bash
+# Servidor
+journalctl -u sanctuarytelas -f
+
+# Caddy (certificados, proxy)
+journalctl -u caddy -f
+
+# Teste rápido de X-Frame-Options (deve voltar vazio)
+curl -sI https://seu-dominio.com | grep -i x-frame
+```
+
+## Variáveis de ambiente (.env)
+
+| Variável | Obrigatória? | Descrição |
+|----------|--------------|-----------|
+| `SESSION_SECRET` | Sim (prod) | Chave HMAC para tokens (64 chars hex). Gerado pelo `npm run configurar`. |
+| `PORT` | Não (padrão 3001) | Porta local do servidor. |
+| `PUBLIC_ORIGIN` | Sim | Endereço público HTTPS (ex: `https://tela.seusite.com`). Atualizado auto pelo túnel. |
+| `DISCORD_CLIENT_ID` | Para Discord | Client ID da Application no portal Discord. |
+| `DISCORD_CLIENT_SECRET` | Para Discord | Client Secret da Application. |
+| `DISCORD_BOT_TOKEN` | Opcional | Token do Bot (para verificação de voz nas "Salas da call"). |
+| `DISCORD_BOT_TOKEN` | Opcional | IDs de admins do painel (separados por vírgula). |
+| `TURN_URL` | Opcional | URL do servidor TURN (ex: `turn:seu-turn.com:3478?transport=udp`). |
+| `TURN_USER` / `TURN_PASS` | Se TURN | Credenciais do TURN. |
+| `NODE_ENV` | Prod | `production` ativa validações estritas (SESSION_SECRET obrigatório). |
+| `LOG_FORMAT` | Não | `json` para logs estruturados (Loki, Grafana). |
+| `TURN_URL` | Não | URL do TURN (formato: `turn:host:port?transport=udp`). |
+
+## Estrutura do projeto
+
+```
+sanctuarytelas/
+├── client/          # Frontend (Vite, vanilla JS)
+│   ├── src/
+│   │   ├── main.js      # Entry point (Activity + standalone)
+│   │   ├── style.css    # Estilos (dark mode, grid, dock, fullscreen)
+│   │   ├── player.js    # Player WebRTC/relay (decode, render, stats)
+│   │   └── audio.js     # Audio encoding/decoding
+│   └── index.html
+├── server/          # Backend (Node, Express, WS)
+│   ├── index.js         # Servidor principal (Express, WS, auth, rooms)
+│   ├── rooms.js         # Gerenciamento de salas/usuários
+│   ├── tokens.js        # JWT signing/verification
+│   ├── system.js        # Métricas de sistema (CPU, mem, disco, rede)
+│   ├── admin.js         # Painel admin (/api/admin/*)
+│   └── public/          # HTMLs estáticos (privacidade, termos, admin)
+├── shared/          # Código compartilhado (client + server)
+│   ├── rtc.js           # WebRTC helpers (codecs, ICE, bandwidth)
+│   └── broadcaster.js   # Broadcaster (captura, encode, WebRTC peers)
+├── infra/           # Configs de infra
+│   ├── sanctuarytelas.service  # systemd unit
+│   └── Caddyfile              # Reverse proxy + HTTPS
+├── scripts/         # CLI tools
+│   ├── configurar.mjs       # Assistente interativo
+│   ├── tunel.mjs            # Túnel Cloudflare descartável
+│   ├── tunel-criar.mjs      # Túnel fixo Cloudflare (DNS)
+│   ├── start-fast.mjs       # start:fast (config + build + túnel + server)
+│   └── ...
+├── docs/            # Documentação extra
+└── package.json
+```
+
+## Painel administrativo (`/admin`)
+
+Requer `DISCORD_ADMIN_ID` no `.env` (seu User ID numérico do Discord, ative Developer Mode → botão direito → Copy ID).
+
+- Métricas em tempo real: usuários, salas, streams, banda, ping (avg/p50/p95)
+- Por servidor (guild): conexões, salas, calls, usuários únicos, tráfego
+- Por usuário: nome, avatar, servidores, salas, roles, ping, se está transmitindo
+- Sistema: CPU processo/host, memória, disco, uptime, limites de container
+- Gráfico de banda (2 min, inbound/outbound)
+- Export: não implementado (pode adicionar botão CSV/JSON no `admin.js`)
+
+## Fullscreen e controles
+
+- **Tecla `I`**: toggle overlay de stats (ping, bitrate, resolução, FPS, descartados, transporte)
+- **Tecla `Espaço`**: play/pause (quando implementado)
+- **Tecla `M`**: mute/unmute
+- **Tecla `F`**: fullscreen
+- **Botão 🔗 no dock**: copia link da sala (formato `/?room=ID`)
+- **Sidebar recolhível**: botão ◀/▶ na lateral + aba flutuante quando recolhida
+- **Fullscreen API**: entra em fullscreen real do navegador quando permitido; fallback para modo "cheia" interno (remove sidebar, expande tile)
+- **Esc**: sai do fullscreen e restaura layout
+
+## TURN (opcional, para NATs difíceis)
+
+Sem TURN, o relay WebSocket já garante que todos assistem. TURN melhora: tira carga do seu servidor e usa banda de terceiros.
+
+Provedores gratuitos/baixo custo:
+- **Metered.ca**: 2 GB/mês grátis
+- **Twilio Network Traversal**: ~$0.004/GB
+- **Xirsys**: 1 GB/mês grátis
+- **Auto-hospedado (coturn)**: VPS separada
 
 ```env
-DISCORD_ADMIN_ID=123456789012345678
+TURN_URL=turn:seu-turn.com:3478?transport=udp
+TURN_USER=usuario
+TURN_PASS=senha
 ```
 
-Mais de uma pessoa administrando? Separe os IDs por vírgula:
+## Verificação de voz (opcional)
 
-```env
-DISCORD_ADMIN_ID=123456789012345678,987654321098765432
+Sem `DISCORD_BOT_TOKEN`, a "Sala da call" usa `instance_id` da Activity como escopo (menos seguro: cliente pode falsificar).
+
+Com Bot Token:
+1. Portal Discord → Bot → Add Bot → **Reset Token** → copie
+2. OAuth2 → URL Generator → `bot` + `applications.commands` → autorize no servidor
+3. `.env`: `DISCORD_BOT_TOKEN=seu-token`
+4. Reinicia: `sudo systemctl restart sanctuarytelas`
+
+O servidor consulta `GET /guilds/{guildId}/voice-states/{userId}` no Discord para confirmar presença no canal de voz.
+
+## Métricas Prometheus (`/metrics`)
+
+Admin-only (requer login `/admin` + cookie `discord_screen_admin`).
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: 'sanctuary-telas'
+    static_configs:
+      - targets: ['seu-dominio.com']
+    scheme: https
+    metrics_path: /metrics
+    authorization:
+      credentials: SEU_COOKIE_AQUI
 ```
 
-O `SESSION_SECRET` é outra variável, e é dela o aviso de "mínimo 32”: o ID do
-Discord tem 18 dígitos e está certo assim.
+Métricas principais:
+- `sanctuary_up` (1/0)
+- `sanctuary_rooms_total`, `sanctuary_users_total`, `sanctuary_connections_total`
+- `sanctuary_traffic_in_bytes_per_sec`, `sanctuary_traffic_out_bytes_per_sec`
+- `sanctuary_ping_avg_ms`, `sanctuary_ping_p95_ms`
+- `sanctuary_cpu_process_percent`, `sanctuary_memory_process_rss_bytes`
+- `sanctuary_disk_used_bytes`, `sanctuary_disk_total_bytes`
 
-Reinicie o servidor e abra `https://seu-dominio.com/admin`. O painel pede login
-pelo Discord e o backend compara a conta confirmada pelo próprio Discord com o
-ID acima. Os endpoints não aceitam um ID enviado pelo navegador e não expõem
-Client Secret, Bot Token ou Session Secret.
+## Segurança
 
-No Linux, o painel também lê `/proc`, cgroups e o sistema de arquivos para
-mostrar tráfego de rede do host/container e limites do container. No Windows,
-CPU, memória, disco e todas as métricas da aplicação funcionam; apenas os
-contadores globais de rede da máquina ficam indisponíveis.
+- **CSP**: `frame-ancestors 'self' https://discord.com https://*.discord.com https://*.discordsays.com`
+- **X-Frame-Options**: `ALLOWALL` (desarma header da hospedagem)
+- **Rate limit**: 10 req/s por IP em `/api/token` e `/api/ice`
+- **Acesso web direto bloqueado**: retorna 403 com página customizada (só libera via Discord Activity)
+- **Cookies admin**: `HttpOnly`, `SameSite=Lax`, 8h, assinados com `SESSION_SECRET`
+- **Tokens de sala**: JWT assinados, sem expiração (morrem com a sala)
+- **Senhas de sala**: scrypt + salt, rate limit de tentativas
 
-O nome de um servidor é resolvido com o Bot Token. Quando o bot não estiver
-naquele servidor, o painel mostra o Guild ID sem impedir as outras métricas.
+## Testes
 
----
+```bash
+# Unit + integração
+npm test
 
-## Compartilhando com som
+# Com cobertura (threshold: 86% lines/statements/functions, 84% branches)
+npx vitest run --coverage
+```
 
-O som é sempre pedido — não há nada para ligar antes. Na janela que o navegador
-abre, **escolha uma aba** e marque a caixinha de áudio que aparece lá embaixo.
+## Licença
 
-### Por que só aba?
+MIT — uso livre, modificação livre, distribuição livre. Sem garantias.
 
-Se você escolher a tela inteira, o computador entrega **todo** o som que está
-tocando — inclusive o do Discord. Aí todo mundo na call escuta a própria voz de
-volta, com atraso. É insuportável em segundos.
+## Contato / Issues
 
-Nenhum navegador consegue tirar um programa específico dessa captura: o som vem
-misturado, é tudo ou nada. Por isso, na tela inteira o navegador nem oferece a
-caixinha de áudio: a transmissão vai **sem som**.
-
-### Quero mostrar a tela inteira E ter som
-
-Dá. Clique na engrenagem e escolha **"Som de uma aba ou janela"**. O vídeo continua
-sendo a tela inteira, e o som passa a vir da aba que você escolher — que é a
-única fonte que não carrega o Discord junto.
-
-Serve para YouTube, Twitch, jogo de navegador. Para um jogo instalado, cujo som
-não está em aba nenhuma, não tem como — nem aqui nem em qualquer outro site.
-
-Quem assiste passa o mouse no alto-falante da barra de baixo para ajustar o
-volume, ou clica nele para silenciar.
-
-> Som funciona no Chrome, Edge, Brave e Opera.
+- GitHub: https://github.com/LightDNZ/sanctuarytelas/issues
+- Email: contato@exemplo.com (atualize no `privacidade.html` e `termos.html`)
 
 ---
 
-## Deu errado?
-
-**A atividade não abre, ou fica só um retângulo branco**
-O endereço público mudou. Vá no site do Discord em **Activities → URL Mappings**
-e troque o *Target* pelo endereço que aparece na janela preta. Para isso não
-acontecer nunca mais, rode `npm run tunel:criar`.
-
-**"A porta 3001 já está sendo usada"**
-Tem outra janela do programa aberta. Feche a outra e tente de novo.
-
-**O botão de compartilhar abre uma aba e não acontece nada**
-Essa aba precisa continuar aberta enquanto você transmite. Pode voltar para o
-Discord normalmente, só não feche a aba.
-
-**"npm não é reconhecido como um comando"**
-O Node.js não foi instalado, ou a janela preta foi aberta antes da instalação.
-Feche a janela, abra de novo e tente outra vez.
-
-**Não sai som**
-Abra o botão ⓘ na barra de baixo e olhe a linha **Som**. Ela diz em qual dos
-casos você está: sem áudio na transmissão, esperando o áudio, silenciado aí, ou
-tocando.
-
-**Quero mudar alguma configuração**
-Rode `npm run configurar`. Ele lembra do que você já respondeu — é só apertar
-Enter no que não mudou.
-
-**A "Sala da call" não confere quem está no canal de voz**
-Isso é opcional e só importa se você quer garantir que apenas quem está na call
-consiga entrar. Precisa criar um bot no site do Discord e colar o token dele em
-`DISCORD_BOT_TOKEN`, dentro do arquivo `.env`. Sem isso tudo funciona igual.
-
----
-
-## Deixar no ar direto (sem seu computador ligado)
-
-Você precisa de uma hospedagem que rode Node.js. Lá dentro:
-
-1. Coloque o projeto e rode `npm install`.
-2. Crie o arquivo `.env` com `npm run configurar`.
-3. Troque, dentro do `.env`:
-   - `NODE_ENV` para `production`
-   - `PUBLIC_ORIGIN` para o endereço do seu site (ex: `https://tela.seusite.com`)
-4. Rode `npm start`.
-
-No site do Discord, troque o *Target* e o *Redirect* pelo endereço do seu site.
-Aí nenhum túnel é necessário.
-
----
-
-## Comandos, resumidos
-
-| Comando | Para quê |
-|---|---|
-| `npm install` | Baixa o que o programa precisa. Só na primeira vez. |
-| `npm run start:fast` | **Liga tudo.** Configura se faltar, e sobe numa janela só. |
-| `npm run tunel:criar` | Uma vez só: cria um endereço fixo, que não muda mais. |
-| `npm run configurar` | Refaz as perguntas da configuração. |
-| `npm run smoke` | Confere se está tudo funcionando por dentro. |
-
-Para quem mexe no código:
-
-| Comando | Para quê |
-|---|---|
-| `npm run dev` | Site, servidor e túnel juntos, remontando a cada arquivo salvo. |
-| `npm run dev:rapido` | O mesmo, mas com endereço descartável e sem tocar no `.env`. |
-| `npm start` | Monta o site e sobe só o servidor, sem túnel. |
-| `npm run tunel` | Só o túnel, numa janela separada. |
-
----
-
-## O que ainda não dá
-
-- **Compartilhar do celular.** Nenhum navegador de celular permite.
-- **Som de programa instalado** em tela cheia. Só som de aba (veja acima).
-- **Muita gente ao mesmo tempo.** Cada pessoa assistindo consome a qualidade
-  escolhida, inteira. Em 2,5 Mb/s, cinco pessoas já são 12,5 Mb/s de subida; em
-  8 Mb/s, são 40.
-- **60 fps em qualquer computador.** Se o navegador não tiver codificação por
-  hardware, ele não dá conta de 60 quadros em tela grande e entrega menos. A
-  página de captura avisa quando isso acontece.
-- **Mais de 4 telas ao mesmo tempo** na mesma sala.
-
-Se você mexe em código e quer entender as decisões por trás disso,
-veja [docs/como-funciona.md](docs/como-funciona.md).
+**Não é afiliado ao Discord Inc.** Discord é marca registrada da Discord Inc.
