@@ -15,7 +15,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-Type=notify
+Type=simple
 User=sanctuary
 Group=sanctuary
 WorkingDirectory=/opt/sanctuarytelas
