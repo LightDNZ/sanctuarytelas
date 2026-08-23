@@ -896,13 +896,6 @@ app.get('/health', (_req, res) => {
     },
     version: process.version,
   });
-});
-
-// Watchdog ping (systemd WatchdogSec)
-if (process.env.WATCHDOG_PID) {
-  setInterval(() => {
-    try { process.kill(process.env.WATCHDOG_PID, 0); } catch { }
-  }, 15000);
 }
 
 /**

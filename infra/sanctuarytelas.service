@@ -28,9 +28,9 @@ ExecStart=/usr/bin/node server/index.js
 # daqui: é ele que faz o servidor recusar subir sem SESSION_SECRET, e essa
 # garantia não pode depender de alguém lembrar de editar um arquivo.
 Environment=NODE_ENV=production
-# Watchdog: servidor deve pingar a cada 15s (WatchdogSec/2)
-Environment=WATCHDOG_PID=1
-WatchdogSec=30
+# Watchdog desabilitado — o ping via sd_notify não está implementado no Node.
+# Para habilitar: instale 'systemd-notify' e chame notify('WATCHDOG=1') a cada 15s.
+# WatchdogSec=300
 
 Restart=always
 RestartSec=3
