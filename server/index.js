@@ -881,12 +881,14 @@ app.get('/auth/callback', async (req, res) => {
 // Healthcheck público (sem auth) — para load balancer, systemd watchdog, uptime monitor
 app.get('/health', (_req, res) => {
   const stats = R.adminStats();
+  const users = stats.rooms.reduce((sum, r) => sum + (r.users?.length ?? 0), 0);
+  const connections = stats.rooms.reduce((sum, r) => sum + (r.connections ?? 0), 0);
   res.json({
     ok: true,
     uptime: process.uptime(),
     rooms: stats.rooms.length,
-    users: stats.summary.users,
-    connections: stats.summary.connections,
+    users,
+    connections,
     memory: {
       rss: process.memoryUsage().rss,
       heapUsed: process.memoryUsage().heapUsed,
