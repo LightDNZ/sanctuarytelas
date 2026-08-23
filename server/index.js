@@ -942,7 +942,7 @@ app.get('/api/admin/metrics', requireAdmin, (_req, res) => {
   res.json(dashboard);
 });
 
-app.get('/metrics', (_req, res) => {
+app.get('/metrics', requireAdmin, (_req, res) => {
   const stats = R.adminStats();
   const system = systemSnapshot();
   const wsClients = wss.clients.size;
