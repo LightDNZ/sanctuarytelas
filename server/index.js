@@ -26,9 +26,15 @@ function log(level, msg, meta = {}) {
   }
 }
 
-function logStartup(msg, meta = {}) { log('info', msg, meta); }
-function logWarn(msg, meta = {}) { log('warn', msg, meta); }
-function logError(msg, meta = {}) { log('error', msg, meta); }
+function logStartup(msg, meta = {}) {
+  log('info', msg, meta);
+}
+function logWarn(msg, meta = {}) {
+  log('warn', msg, meta);
+}
+function logError(msg, meta = {}) {
+  log('error', msg, meta);
+}
 
 // Rate limiter simples em memória (por IP)
 const RATE_LIMIT = new Map();
@@ -42,7 +48,10 @@ function rateLimit(maxReq = 10, windowMs = 1000) {
       entry.count++;
       if (entry.count > maxReq) {
         res.set('Retry-After', Math.ceil((entry.resetAt + windowMs - now) / 1000));
-        return res.status(429).json({ error: 'rate_limited', retryAfter: Math.ceil((entry.resetAt + windowMs - now) / 1000) });
+        return res.status(429).json({
+          error: 'rate_limited',
+          retryAfter: Math.ceil((entry.resetAt + windowMs - now) / 1000),
+        });
       }
     } else {
       RATE_LIMIT.set(key, { count: 1, resetAt: now });
@@ -107,7 +116,9 @@ if (TEM_ADMIN && process.env.SESSION_SECRET.length < 32) {
   // Nomeia a variavel e desmente o engano que ela ja causou: quem acabou de
   // preencher o DISCORD_ADMIN_ID le "minimo 32" e conclui que o ID do Discord,
   // de 18 digitos, e que esta curto. Nao e — sao duas variaveis diferentes.
-  logError(`SESSION_SECRET curto demais (tem ${process.env.SESSION_SECRET.length}, precisa de 32+).`);
+  logError(
+    `SESSION_SECRET curto demais (tem ${process.env.SESSION_SECRET.length}, precisa de 32+).`,
+  );
   logError('Nao e o DISCORD_ADMIN_ID: o ID do Discord tem 18 digitos e esta certo.');
   logError(`Gere um: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`);
   process.exit(1);
@@ -175,8 +186,7 @@ function apenasDiscord(req, res, next) {
   }
 
   const referer = req.headers.referer || req.headers.origin || '';
-  const vemDoDiscord =
-    referer.includes('discord.com') || referer.includes('discordsays.com');
+  const vemDoDiscord = referer.includes('discord.com') || referer.includes('discordsays.com');
 
   if (!vemDoDiscord) {
     return res.status(403).send(`
@@ -898,6 +908,9 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// Alias para compatibilidade com testes e ferramentas antigas
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
 /**
  * Servidores ICE para a conexão direta entre quem transmite e quem assiste.
  *
@@ -1005,7 +1018,10 @@ app.get('/metrics', requireAdmin, (_req, res) => {
   const connections = stats.rooms.reduce((sum, r) => sum + (r.connections ?? 0), 0);
   const viewers = stats.rooms.reduce((sum, r) => sum + (r.viewers ?? 0), 0);
   const broadcasters = stats.rooms.reduce((sum, r) => sum + (r.broadcasters ?? 0), 0);
-  const activeWatchers = stats.rooms.reduce((sum, r) => sum + r.streams.reduce((s, st) => s + (st.watchers ?? 0), 0), 0);
+  const activeWatchers = stats.rooms.reduce(
+    (sum, r) => sum + r.streams.reduce((s, st) => s + (st.watchers ?? 0), 0),
+    0,
+  );
   const streams = stats.rooms.reduce((sum, r) => sum + (r.streams?.length ?? 0), 0);
 
   const lines = [
@@ -1108,7 +1124,7 @@ app.get('/metrics', requireAdmin, (_req, res) => {
     '',
     '# HELP sanctuary_memory_host_used_bytes Host memory used',
     '# TYPE sanctuary_memory_host_used_bytes gauge',
-    `sanctuary_memory_host_used_bytes ${(system.memory.hostTotalBytes - system.memory.hostFreeBytes) ?? 0}`,
+    `sanctuary_memory_host_used_bytes ${system.memory.hostTotalBytes - system.memory.hostFreeBytes}`,
     '',
     '# HELP sanctuary_memory_host_total_bytes Host total memory',
     '# TYPE sanctuary_memory_host_total_bytes gauge',
@@ -1137,7 +1153,7 @@ app.get('/metrics', requireAdmin, (_req, res) => {
       '# HELP sanctuary_container_cpu_limit_cores Container CPU limit',
       '# TYPE sanctuary_container_cpu_limit_cores gauge',
       `sanctuary_container_cpu_limit_cores ${system.container.cpuLimitCores}`,
-      ''
+      '',
     );
   }
   if (system.container?.memoryMax) {
@@ -1145,7 +1161,7 @@ app.get('/metrics', requireAdmin, (_req, res) => {
       '# HELP sanctuary_container_memory_max_bytes Container memory limit',
       '# TYPE sanctuary_container_memory_max_bytes gauge',
       `sanctuary_container_memory_max_bytes ${system.container.memoryMax}`,
-      ''
+      '',
     );
   }
 
@@ -1297,7 +1313,9 @@ function handleBroadcaster(ws, room, info, fonte) {
     return;
   }
 
-  logStartup(`[room ${room.id}] broadcaster conectado: ${info.name} · ${fonte} (slot ${entry.slot})`);
+  logStartup(
+    `[room ${room.id}] broadcaster conectado: ${info.name} · ${fonte} (slot ${entry.slot})`,
+  );
 
   ws.on('message', (data, isBinary) => {
     if (isBinary) {
@@ -1411,7 +1429,9 @@ function handleViewer(ws, room, auth) {
 
       for (const entry of alvos) R.sendJson(entry.ws, { type: 'stop-request' });
       if (alvos.length) {
-        logStartup(`[room ${room.id}] parada pedida por ${auth.name}: ${alvos.map((e) => e.fonte).join(', ')}`);
+        logStartup(
+          `[room ${room.id}] parada pedida por ${auth.name}: ${alvos.map((e) => e.fonte).join(', ')}`,
+        );
       }
     }
   });
