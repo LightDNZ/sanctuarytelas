@@ -39,11 +39,18 @@ const json = (corpo, status = 200) =>
 const post = (caminho, corpo) =>
   fetch(`${base}${caminho}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Referer': 'https://discord.com/'
+    },
     body: JSON.stringify(corpo ?? {}),
   });
 
-const get = (caminho, init) => fetch(`${base}${caminho}`, { redirect: 'manual', ...init });
+const get = (caminho, init) => fetch(`${base}${caminho}`, {
+  redirect: 'manual',
+  headers: { 'Referer': 'https://discord.com/' },
+  ...init
+});
 
 /** Uma identidade assinada pelo próprio servidor, como o cliente obtém. */
 async function identidade(corpo = {}) {

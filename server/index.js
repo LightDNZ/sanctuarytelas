@@ -898,6 +898,9 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// Alias para compatibilidade com testes e ferramentas antigas
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
 /**
  * Servidores ICE para a conexão direta entre quem transmite e quem assiste.
  *
@@ -1108,7 +1111,7 @@ app.get('/metrics', requireAdmin, (_req, res) => {
     '',
     '# HELP sanctuary_memory_host_used_bytes Host memory used',
     '# TYPE sanctuary_memory_host_used_bytes gauge',
-    `sanctuary_memory_host_used_bytes ${(system.memory.hostTotalBytes - system.memory.hostFreeBytes) ?? 0}`,
+    `sanctuary_memory_host_used_bytes ${system.memory.hostTotalBytes - system.memory.hostFreeBytes}`,
     '',
     '# HELP sanctuary_memory_host_total_bytes Host total memory',
     '# TYPE sanctuary_memory_host_total_bytes gauge',

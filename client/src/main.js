@@ -337,17 +337,6 @@ async function exitFullscreenAPI() {
 }
 
 /**
- * Alterna Fullscreen API.
- */
-async function toggleFullscreenAPI() {
-  if (fullscreenAPI) {
-    await exitFullscreenAPI();
-  } else {
-    await enterFullscreenAPI();
-  }
-}
-
-/**
  * Sincroniza estado quando sai do fullscreen (Esc, gesto, etc).
  */
 document.addEventListener('fullscreenchange', () => {
