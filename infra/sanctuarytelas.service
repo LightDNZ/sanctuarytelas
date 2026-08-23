@@ -16,8 +16,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=sala
-Group=sala
+User=sanctuary
+Group=sanctuary
 WorkingDirectory=/opt/sanctuarytelas
 
 # O caminho absoluto do node é exigência do systemd — ele não tem PATH de
