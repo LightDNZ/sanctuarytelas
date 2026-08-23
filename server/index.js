@@ -877,7 +877,29 @@ app.get('/auth/callback', async (req, res) => {
   }
 });
 
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+// Healthcheck público (sem auth) — para load balancer, systemd watchdog, uptime monitor
+app.get('/health', (_req, res) => {
+  const stats = R.adminStats();
+  res.json({
+    ok: true,
+    uptime: process.uptime(),
+    rooms: stats.rooms.length,
+    users: stats.summary.users,
+    connections: stats.summary.connections,
+    memory: {
+      rss: process.memoryUsage().rss,
+      heapUsed: process.memoryUsage().heapUsed,
+    },
+    version: process.version,
+  });
+});
+
+// Watchdog ping (systemd WatchdogSec)
+if (process.env.WATCHDOG_PID) {
+  setInterval(() => {
+    try { process.kill(process.env.WATCHDOG_PID, 0); } catch { }
+  }, 15000);
+}
 
 /**
  * Servidores ICE para a conexão direta entre quem transmite e quem assiste.
