@@ -44,6 +44,7 @@ app.use(express.json());
 function apenasDiscord(req, res, next) {
   // Rotas que o Discord Activity precisa (API, WS, auth, shared) passam direto.
   // share.html também: o transmissor recebe um link direto com token e abre no navegador.
+  // 403.jpg: a própria página de erro precisa carregar a imagem.
   if (
     req.path.startsWith('/api') ||
     req.path === '/ws' ||
@@ -51,7 +52,8 @@ function apenasDiscord(req, res, next) {
     req.path.startsWith('/shared') ||
     req.path === '/api/health' ||
     req.path === '/share.html' ||
-    req.path.startsWith('/share')
+    req.path.startsWith('/share') ||
+    req.path === '/403.jpg'
   ) {
     return next();
   }
