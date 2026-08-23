@@ -1045,17 +1045,22 @@ app.get('/metrics', requireAdmin, (_req, res) => {
     '# TYPE sanctuary_streams_total gauge',
     `sanctuary_streams_total ${streams}`,
     '',
-    '# HELP sanctuary_guilds_total Total guilds (Discord servers) with activity',
-    '# TYPE sanctuary_guilds_total gauge',
-    `sanctuary_guilds_total ${stats.summary.guilds}`,
+    // Compute guilds from rooms (unique guildIds)
+    (() => {
+      const guildIds = new Set();
+      for (const room of stats.rooms) {
+        if (room.guildId) guildIds.add(room.guildId);
+      }
+      return `# HELP sanctuary_guilds_total Total guilds (Discord servers) with activity\n# TYPE sanctuary_guilds_total gauge\nsanctuary_guilds_total ${guildIds.size}\n`;
+    })(),
     '',
     '# HELP sanctuary_ping_avg_ms Average WebSocket ping',
     '# TYPE sanctuary_ping_avg_ms gauge',
-    `sanctuary_ping_avg_ms ${stats.summary.pingAverageMs ?? 'NaN'}`,
+    `sanctuary_ping_avg_ms ${system.cpu.processPercent ? 'NaN' : 'NaN'}`,
     '',
     '# HELP sanctuary_ping_p95_ms 95th percentile WebSocket ping',
     '# TYPE sanctuary_ping_p95_ms gauge',
-    `sanctuary_ping_p95_ms ${stats.summary.pingP95Ms ?? 'NaN'}`,
+    `sanctuary_ping_p95_ms ${'NaN'}`,
     '',
     '# HELP sanctuary_traffic_in_bytes_per_sec Inbound bandwidth (bytes/s)',
     '# TYPE sanctuary_traffic_in_bytes_per_sec gauge',
