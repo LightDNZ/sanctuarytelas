@@ -43,12 +43,15 @@ app.use(express.json());
 // Bloqueia acesso direto pelo navegador — só permite via Discord Activity.
 function apenasDiscord(req, res, next) {
   // Rotas que o Discord Activity precisa (API, WS, auth, shared) passam direto.
+  // share.html também: o transmissor recebe um link direto com token e abre no navegador.
   if (
     req.path.startsWith('/api') ||
     req.path === '/ws' ||
     req.path.startsWith('/auth') ||
     req.path.startsWith('/shared') ||
-    req.path === '/api/health'
+    req.path === '/api/health' ||
+    req.path === '/share.html' ||
+    req.path.startsWith('/share')
   ) {
     return next();
   }
