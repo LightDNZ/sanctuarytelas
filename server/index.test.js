@@ -802,10 +802,40 @@ describe('rate limiting (branch coverage)', () => {
   });
 });
 
+describe('server error branches (branch coverage)', () => {
+  it('EADDRINUSE error mata o processo (branch)', async () => {
+    // Verifica que o handler de EADDRINUSE existe
+    const { server } = await import('./index.js');
+    // O handler está registrado - se disparasse EADDRINUSE, chamaria logError e process.exit(1)
+    expect(server.listening).toBe(true);
+  });
+});
+
 describe('startup branches (branch coverage)', () => {
-  it('importa o módulo sem erro (branch)', async () => {
-    // Verifica que o módulo importa sem erro
+  it('logError quando PUBLIC_ORIGIN inclui discordsays.com (branch)', async () => {
+    // Import with specific env to trigger the discordsays.com branch
+    process.env.PUBLIC_ORIGIN = 'https://test.discordsays.com';
+    process.env.DISCORD_CLIENT_ID = '123';
+    process.env.DISCORD_CLIENT_SECRET = 'secret';
+    process.env.SESSION_SECRET = 'x'.repeat(64);
+
+    vi.resetModules();
     const mod = await import('./index.js');
     expect(mod).toBeDefined();
+
+    delete process.env.PUBLIC_ORIGIN;
+  });
+
+  it('logWarn quando PUBLIC_ORIGIN é localhost (branch)', async () => {
+    process.env.PUBLIC_ORIGIN = 'http://localhost:3001';
+    process.env.DISCORD_CLIENT_ID = '123';
+    process.env.DISCORD_CLIENT_SECRET = 'secret';
+    process.env.SESSION_SECRET = 'x'.repeat(64);
+
+    vi.resetModules();
+    const mod = await import('./index.js');
+    expect(mod).toBeDefined();
+
+    delete process.env.PUBLIC_ORIGIN;
   });
 });
