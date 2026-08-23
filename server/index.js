@@ -942,6 +942,151 @@ app.get('/api/admin/metrics', requireAdmin, (_req, res) => {
   res.json(dashboard);
 });
 
+app.get('/metrics', (_req, res) => {
+  const stats = R.adminStats();
+  const system = systemSnapshot();
+  const wsClients = wss.clients.size;
+
+  const lines = [
+    '# HELP sanctuary_up Server is up',
+    '# TYPE sanctuary_up gauge',
+    'sanctuary_up 1',
+    '',
+    '# HELP sanctuary_start_time_seconds Server start timestamp',
+    '# TYPE sanctuary_start_time_seconds gauge',
+    `sanctuary_start_time_seconds ${Math.floor(stats.startedAt / 1000)}`,
+    '',
+    '# HELP sanctuary_rooms_total Total rooms',
+    '# TYPE sanctuary_rooms_total gauge',
+    `sanctuary_rooms_total ${stats.rooms.length}`,
+    '',
+    '# HELP sanctuary_users_total Total connected users',
+    '# TYPE sanctuary_users_total gauge',
+    `sanctuary_users_total ${stats.summary.users}`,
+    '',
+    '# HELP sanctuary_connections_total Total WebSocket connections',
+    '# TYPE sanctuary_connections_total gauge',
+    `sanctuary_connections_total ${stats.summary.connections}`,
+    '',
+    '# HELP sanctuary_viewers_total Total viewers (non-broadcasters)',
+    '# TYPE sanctuary_viewers_total gauge',
+    `sanctuary_viewers_total ${stats.summary.viewerConnections}`,
+    '',
+    '# HELP sanctuary_broadcasters_total Total broadcasters',
+    '# TYPE sanctuary_broadcasters_total gauge',
+    `sanctuary_broadcasters_total ${stats.summary.broadcasterConnections}`,
+    '',
+    '# HELP sanctuary_active_watchers_total Total active watchers across all streams',
+    '# TYPE sanctuary_active_watchers_total gauge',
+    `sanctuary_active_watchers_total ${stats.summary.activeWatchers}`,
+    '',
+    '# HELP sanctuary_streams_total Total active streams',
+    '# TYPE sanctuary_streams_total gauge',
+    `sanctuary_streams_total ${stats.summary.streams}`,
+    '',
+    '# HELP sanctuary_guilds_total Total guilds (Discord servers) with activity',
+    '# TYPE sanctuary_guilds_total gauge',
+    `sanctuary_guilds_total ${stats.summary.guilds}`,
+    '',
+    '# HELP sanctuary_ping_avg_ms Average WebSocket ping',
+    '# TYPE sanctuary_ping_avg_ms gauge',
+    `sanctuary_ping_avg_ms ${stats.summary.pingAverageMs ?? 'NaN'}`,
+    '',
+    '# HELP sanctuary_ping_p95_ms 95th percentile WebSocket ping',
+    '# TYPE sanctuary_ping_p95_ms gauge',
+    `sanctuary_ping_p95_ms ${stats.summary.pingP95Ms ?? 'NaN'}`,
+    '',
+    '# HELP sanctuary_traffic_in_bytes_per_sec Inbound bandwidth (bytes/s)',
+    '# TYPE sanctuary_traffic_in_bytes_per_sec gauge',
+    `sanctuary_traffic_in_bytes_per_sec ${stats.traffic.receivedBytesPerSecond ?? 0}`,
+    '',
+    '# HELP sanctuary_traffic_out_bytes_per_sec Outbound bandwidth (bytes/s)',
+    '# TYPE sanctuary_traffic_out_bytes_per_sec gauge',
+    `sanctuary_traffic_out_bytes_per_sec ${stats.traffic.transmittedBytesPerSecond ?? 0}`,
+    '',
+    '# HELP sanctuary_traffic_dropped_bytes_per_sec Dropped bandwidth (bytes/s)',
+    '# TYPE sanctuary_traffic_dropped_bytes_per_sec gauge',
+    `sanctuary_traffic_dropped_bytes_per_sec ${stats.traffic.droppedBytesPerSecond ?? 0}`,
+    '',
+    '# HELP sanctuary_traffic_in_bytes_total Total inbound bytes',
+    '# TYPE sanctuary_traffic_in_bytes_total counter',
+    `sanctuary_traffic_in_bytes_total ${stats.traffic.receivedBytes ?? 0}`,
+    '',
+    '# HELP sanctuary_traffic_out_bytes_total Total outbound bytes',
+    '# TYPE sanctuary_traffic_out_bytes_total counter',
+    `sanctuary_traffic_out_bytes_total ${stats.traffic.transmittedBytes ?? 0}`,
+    '',
+    '# HELP sanctuary_traffic_dropped_bytes_total Total dropped bytes',
+    '# TYPE sanctuary_traffic_dropped_bytes_total counter',
+    `sanctuary_traffic_dropped_bytes_total ${stats.traffic.droppedBytes ?? 0}`,
+    '',
+    '# HELP sanctuary_ws_clients_total Active WebSocket connections',
+    '# TYPE sanctuary_ws_clients_total gauge',
+    `sanctuary_ws_clients_total ${wsClients}`,
+    '',
+    '# HELP sanctuary_cpu_process_percent Process CPU usage percent',
+    '# TYPE sanctuary_cpu_process_percent gauge',
+    `sanctuary_cpu_process_percent ${system.cpu.processPercent ?? 'NaN'}`,
+    '',
+    '# HELP sanctuary_cpu_host_percent Host CPU usage percent',
+    '# TYPE sanctuary_cpu_host_percent gauge',
+    `sanctuary_cpu_host_percent ${system.cpu.hostPercent ?? 'NaN'}`,
+    '',
+    '# HELP sanctuary_memory_process_rss_bytes Process RSS memory',
+    '# TYPE sanctuary_memory_process_rss_bytes gauge',
+    `sanctuary_memory_process_rss_bytes ${system.memory.process.rss ?? 0}`,
+    '',
+    '# HELP sanctuary_memory_process_heap_used_bytes Process heap used',
+    '# TYPE sanctuary_memory_process_heap_used_bytes gauge',
+    `sanctuary_memory_process_heap_used_bytes ${system.memory.process.heapUsed ?? 0}`,
+    '',
+    '# HELP sanctuary_memory_host_used_bytes Host memory used',
+    '# TYPE sanctuary_memory_host_used_bytes gauge',
+    `sanctuary_memory_host_used_bytes ${(system.memory.hostTotalBytes - system.memory.hostFreeBytes) ?? 0}`,
+    '',
+    '# HELP sanctuary_memory_host_total_bytes Host total memory',
+    '# TYPE sanctuary_memory_host_total_bytes gauge',
+    `sanctuary_memory_host_total_bytes ${system.memory.hostTotalBytes ?? 0}`,
+    '',
+    '# HELP sanctuary_disk_used_bytes Disk used',
+    '# TYPE sanctuary_disk_used_bytes gauge',
+    `sanctuary_disk_used_bytes ${system.disk?.usedBytes ?? 0}`,
+    '',
+    '# HELP sanctuary_disk_total_bytes Disk total',
+    '# TYPE sanctuary_disk_total_bytes gauge',
+    `sanctuary_disk_total_bytes ${system.disk?.totalBytes ?? 0}`,
+    '',
+    '# HELP sanctuary_process_uptime_seconds Process uptime',
+    '# TYPE sanctuary_process_uptime_seconds gauge',
+    `sanctuary_process_uptime_seconds ${system.processUptimeSeconds ?? 0}`,
+    '',
+    '# HELP sanctuary_nodejs_version Node.js version info',
+    '# TYPE sanctuary_nodejs_version gauge',
+    `sanctuary_nodejs_version{version="${system.nodeVersion}"} 1`,
+    '',
+  ];
+
+  if (system.container?.cpuLimitCores) {
+    lines.push(
+      '# HELP sanctuary_container_cpu_limit_cores Container CPU limit',
+      '# TYPE sanctuary_container_cpu_limit_cores gauge',
+      `sanctuary_container_cpu_limit_cores ${system.container.cpuLimitCores}`,
+      ''
+    );
+  }
+  if (system.container?.memoryMax) {
+    lines.push(
+      '# HELP sanctuary_container_memory_max_bytes Container memory limit',
+      '# TYPE sanctuary_container_memory_max_bytes gauge',
+      `sanctuary_container_memory_max_bytes ${system.container.memoryMax}`,
+      ''
+    );
+  }
+
+  res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+  res.send(lines.join('\n'));
+});
+
 /**
  * O que o cliente precisa saber e só o servidor sabe, em tempo de execução.
  *
