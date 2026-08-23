@@ -164,6 +164,7 @@ function apenasDiscord(req, res, next) {
     req.path.startsWith('/auth') ||
     req.path.startsWith('/shared') ||
     req.path === '/api/health' ||
+    req.path === '/health' ||
     req.path === '/share.html' ||
     req.path.startsWith('/share') ||
     req.path === '/403.jpg' ||
