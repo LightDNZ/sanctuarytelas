@@ -896,7 +896,7 @@ app.get('/health', (_req, res) => {
     },
     version: process.version,
   });
-}
+});
 
 /**
  * Servidores ICE para a conexão direta entre quem transmite e quem assiste.
