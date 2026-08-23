@@ -38,6 +38,7 @@ const CONHECIDAS = [
   'DISCORD_CLIENT_ID',
   'DISCORD_CLIENT_SECRET',
   'DISCORD_BOT_TOKEN',
+  'DISCORD_ADMIN_ID',
   'NODE_ENV',
   'TUNEL_CONFIG',
 ];
@@ -71,12 +72,22 @@ export function gravarEnv(novos) {
     '',
     '# Credenciais da sua aplicação no site do Discord.',
     '# Vazias = o programa funciona só no navegador, fora do Discord.',
+    '# Onde pegar: discord.com/developers/applications, sua aplicação, menu OAuth2.',
     `DISCORD_CLIENT_ID=${v.DISCORD_CLIENT_ID ?? ''}`,
     `DISCORD_CLIENT_SECRET=${v.DISCORD_CLIENT_SECRET ?? ''}`,
     '',
-    '# Token do bot. Opcional: sem ele tudo funciona, menos a "Sala da call",',
-    '# que precisa confirmar com o Discord quem está no canal de voz.',
+    '# Token do bot. Opcional: sem ele tudo funciona, menos a "Sala da call"',
+    '# (que confirma quem está no canal de voz) e o nome e a imagem dos',
+    '# servidores no painel.',
+    '# Onde pegar: mesma aplicação, menu "Bot", botão "Reset Token".',
+    '# O bot também precisa estar no servidor.',
     `DISCORD_BOT_TOKEN=${v.DISCORD_BOT_TOKEN ?? ''}`,
+    '',
+    '# ID da SUA CONTA do Discord. Não é o Client ID nem o ID do servidor:',
+    '# os três são números parecidos, e o errado só falha na hora de entrar.',
+    '# Ligue o Modo desenvolvedor (Configurações, Avançado), botão direito no',
+    '# seu nome, Copiar ID. Só esta conta abre /admin. Vazio = painel desligado.',
+    `DISCORD_ADMIN_ID=${v.DISCORD_ADMIN_ID ?? ''}`,
     '',
     '# Deixe "production" quando publicar de verdade.',
     `NODE_ENV=${v.NODE_ENV ?? 'development'}`,
@@ -91,9 +102,9 @@ export function gravarEnv(novos) {
   // pode sumir em silencio porque alguem rodou o assistente.
   const extras = Object.keys(v).filter((k) => !CONHECIDAS.includes(k));
   if (extras.length) {
-    linhas.push("# Escritas por voce, mantidas como estavam.");
-    for (const k of extras) linhas.push(k + "=" + v[k]);
-    linhas.push("");
+    linhas.push('# Escritas por voce, mantidas como estavam.');
+    for (const k of extras) linhas.push(k + '=' + v[k]);
+    linhas.push('');
   }
 
   fs.writeFileSync(ARQUIVO, linhas.join('\n'));

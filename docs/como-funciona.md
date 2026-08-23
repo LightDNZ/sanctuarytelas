@@ -122,9 +122,52 @@ buffer sem tocar nele, e quem assiste sabe para qual decodificador mandar. Até
 O relógio de envio serve só para medir atraso. É exato na mesma máquina; entre
 máquinas diferentes, aproximado.
 
-Controle vai em JSON: `start`, `config`, `audio-config`, `stop`
+Controle vai em JSON: `start`, `config`, `audio-config`, `stop`, `rtc`
 (transmissor → servidor); `state`, `stream-start`, `config`, `audio-config`,
-`stream-stop`, `need-keyframe`, `error` (servidor → clientes).
+`stream-stop`, `need-keyframe`, `rtc-want`, `rtc`, `rtc-bye`, `chunks`,
+`error` (servidor → clientes); `watch`, `unwatch`, `rtc`, `rtc-ativo`
+(espectador → servidor).
+
+## WebRTC por cima do relay
+
+O relay acima é o piso, e continua sendo o caminho de todo mundo no primeiro
+segundo. Por cima dele, cada espectador ganha uma tentativa de conexão direta
+com quem transmite.
+
+A diferença que importa não é o número de saltos — é o transporte. O WebSocket
+anda sobre TCP, e TCP não sabe descartar um quadro atrasado: quando a rede
+aperta, ele entrega tudo, em ordem, mais tarde. A imagem não fica pior, ela
+fica no passado, e o que se vê é a transmissão andando aos saltos. O WebRTC
+anda sobre SRTP/UDP: abaixa o bitrate sozinho quando detecta perda, repõe
+pacote perdido com NACK e, no limite, deixa o quadro velho para trás. Ele
+degrada a qualidade em vez de degradar o tempo.
+
+Como funciona a troca:
+
+1. Alguém pede `watch`. O relay começa a entregar na hora, como sempre fez, e
+   o servidor manda um `rtc-want` ao transmissor com o nome daquele espectador.
+2. O transmissor abre um `RTCPeerConnection`, pendura as faixas do stream que
+   já está capturando e manda a oferta. Quem tem a mídia é quem oferece.
+3. Offer, answer e candidatos ICE viajam como envelopes opacos pelo mesmo
+   socket do relay — ele já existe e já está autenticado.
+4. Quando o primeiro quadro **aparece de fato** no `<video>` do espectador — e
+   não quando a conexão diz "connected" —, ele avisa `rtc-ativo`. Só então o
+   servidor para de mandar os bytes daquela tela para ele.
+5. Se todo mundo que assiste chegou nesse ponto, o servidor manda `chunks:
+false` e o transmissor para de codificar para o relay: aqueles quadros não
+   teriam para onde ir, e a subida dele agora é disputada pelas conexões
+   diretas.
+
+E quando não fecha — NAT simétrico sem TURN, sandbox que bloqueia, rede
+corporativa — nada acontece. Passados 8 segundos sem quadro, ou na primeira
+falha de ICE, o espectador desiste em silêncio e segue no relay, que nunca foi
+desligado para ele. É por isso que o WebCodecs não saiu do código: ele é o que
+garante que ninguém fica sem imagem por causa de um roteador.
+
+`TURN_URL`, `TURN_USER` e `TURN_PASS` no `.env` (opcionais) alimentam o
+`/api/ice`. Sem eles fica só o STUN público, que resolve a maioria das casas
+mas não quem está atrás de CGNAT. Um TURN encaminha o vídeo de verdade — custa
+banda, e por isso é escolha de quem hospeda, não padrão.
 
 ## Detalhes que não são acidentais
 
@@ -140,6 +183,13 @@ Controle vai em JSON: `start`, `config`, `audio-config`, `stop`
 - **Backpressure no relay.** Se o socket de alguém acumula mais de 2 MB, o
   servidor descarta quadros para essa pessoa em vez de enfileirar. Sem isso, um
   espectador com internet ruim derruba o processo por consumo de memória.
+- **A troca de transporte é decidida pelo primeiro quadro, não pelo
+  `connectionState`.** Um peer "connected" que não entrega nada é
+  indistinguível de um travamento — e desligar o relay confiando nele deixaria
+  a tela preta com a conexão reportando sucesso.
+- **`degradationPreference`.** Tela usa `maintain-resolution`: texto ilegível é
+  pior que texto a 10 quadros. Câmera usa `maintain-framerate`, porque ninguém
+  lê um rosto e movimento picado incomoda mais que imagem macia.
 - **`/.proxy/`** em todo fetch e WebSocket feito de dentro da atividade — é
   assim que o Discord roteia para o seu servidor.
 - **Client ID vem do servidor, não do build.** Embutir no bundle obrigava a
@@ -160,6 +210,7 @@ client/
   src/audio.js    decodifica o som e agenda a reprodução
 shared/
   broadcaster.js  captura + codificação, usada pela aba e pela atividade
+  rtc.js          conexão direta por WebRTC, por cima do relay
 scripts/
   configurar.mjs  assistente de configuração
   tunel.mjs       sobe o túnel e grava o endereço no .env

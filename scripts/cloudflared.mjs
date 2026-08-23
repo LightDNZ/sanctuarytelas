@@ -44,7 +44,8 @@ function alvo() {
   }
 
   if (platform === 'darwin') {
-    const asset = arch === 'arm64' ? 'cloudflared-darwin-arm64.tgz' : 'cloudflared-darwin-amd64.tgz';
+    const asset =
+      arch === 'arm64' ? 'cloudflared-darwin-arm64.tgz' : 'cloudflared-darwin-amd64.tgz';
     return { asset, binario: 'cloudflared', tgz: true };
   }
 
@@ -109,13 +110,15 @@ export async function garantirCloudflared() {
   if (!t) {
     throw new Error(
       `a Cloudflare não publica binário para ${process.platform}/${process.arch}. ` +
-        'Instale o cloudflared à mão e rode de novo.'
+        'Instale o cloudflared à mão e rode de novo.',
     );
   }
 
   fs.mkdirSync(PASTA, { recursive: true });
 
-  console.log(`${cor.fraco}  Primeira vez: buscando o cloudflared (uns 50 MB, fica guardado).${cor.fim}`);
+  console.log(
+    `${cor.fraco}  Primeira vez: buscando o cloudflared (uns 50 MB, fica guardado).${cor.fim}`,
+  );
 
   if (t.tgz) {
     const pacote = path.join(PASTA, t.asset);

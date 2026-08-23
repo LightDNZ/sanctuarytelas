@@ -123,7 +123,7 @@ const nome =
     ? nomeSugerido
     : (
         await rl.question(
-          `  ${cor.azul}Nome do túnel${cor.fim} ${cor.fraco}[${nomeSugerido}]${cor.fim}: `
+          `  ${cor.azul}Nome do túnel${cor.fim} ${cor.fraco}[${nomeSugerido}]${cor.fim}: `,
         )
       ).trim() || nomeSugerido);
 
@@ -174,7 +174,7 @@ if (!fs.existsSync(credenciais)) {
   erro(
     `O arquivo de credenciais não está em ${credenciais}.\n` +
       '  Isso acontece quando o túnel foi criado em outro computador.\n' +
-      '  Escolha outro nome, ou copie o arquivo para cá.'
+      '  Escolha outro nome, ou copie o arquivo para cá.',
   );
   process.exit(1);
 }
@@ -202,7 +202,7 @@ fs.writeFileSync(
     `    service: http://localhost:${porta}`,
     '  - service: http_status:404',
     '',
-  ].join('\n')
+  ].join('\n'),
 );
 
 // --------------------------------------------------------------------- DNS

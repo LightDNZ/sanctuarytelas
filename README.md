@@ -91,12 +91,47 @@ muda, e você não mexe no site do Discord de novo.
 
 ---
 
+## Painel administrativo
+
+O painel mostra em tempo real pessoas e servidores conectados, salas,
+transmissões, banda usada pelo relay, ping, descartes, CPU, memória, disco e
+informações do processo/container.
+
+Ative o modo de desenvolvedor no Discord, clique com o botão direito na sua
+conta e use **Copiar ID do usuário**. Depois acrescente ao `.env`:
+
+```env
+DISCORD_ADMIN_ID=123456789012345678
+```
+
+Mais de uma pessoa administrando? Separe os IDs por vírgula:
+
+```env
+DISCORD_ADMIN_ID=123456789012345678,987654321098765432
+```
+
+O `SESSION_SECRET` é outra variável, e é dela o aviso de "mínimo 32”: o ID do
+Discord tem 18 dígitos e está certo assim.
+
+Reinicie o servidor e abra `https://seu-dominio.com/admin`. O painel pede login
+pelo Discord e o backend compara a conta confirmada pelo próprio Discord com o
+ID acima. Os endpoints não aceitam um ID enviado pelo navegador e não expõem
+Client Secret, Bot Token ou Session Secret.
+
+No Linux, o painel também lê `/proc`, cgroups e o sistema de arquivos para
+mostrar tráfego de rede do host/container e limites do container. No Windows,
+CPU, memória, disco e todas as métricas da aplicação funcionam; apenas os
+contadores globais de rede da máquina ficam indisponíveis.
+
+O nome de um servidor é resolvido com o Bot Token. Quando o bot não estiver
+naquele servidor, o painel mostra o Guild ID sem impedir as outras métricas.
+
+---
+
 ## Compartilhando com som
 
-Ao clicar em **Compartilhar tela**, marque *Compartilhar o som*.
-
-Na janela que o navegador abre, **escolha uma aba** e marque a caixinha de áudio
-que aparece lá embaixo.
+O som é sempre pedido — não há nada para ligar antes. Na janela que o navegador
+abre, **escolha uma aba** e marque a caixinha de áudio que aparece lá embaixo.
 
 ### Por que só aba?
 
@@ -105,12 +140,12 @@ tocando — inclusive o do Discord. Aí todo mundo na call escuta a própria voz
 volta, com atraso. É insuportável em segundos.
 
 Nenhum navegador consegue tirar um programa específico dessa captura: o som vem
-misturado, é tudo ou nada. Por isso, se você escolher a tela inteira, o programa
-transmite **sem som** — e o botão de engrenagem fica amarelo piscando.
+misturado, é tudo ou nada. Por isso, na tela inteira o navegador nem oferece a
+caixinha de áudio: a transmissão vai **sem som**.
 
 ### Quero mostrar a tela inteira E ter som
 
-Dá. Clique na engrenagem amarela e escolha **"Som de uma aba"**. O vídeo continua
+Dá. Clique na engrenagem e escolha **"Som de uma aba ou janela"**. O vídeo continua
 sendo a tela inteira, e o som passa a vir da aba que você escolher — que é a
 única fonte que não carrega o Discord junto.
 

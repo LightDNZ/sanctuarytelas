@@ -79,9 +79,11 @@ export async function garantirEntryPoint(clientId, clientSecret) {
     if (!criar.ok) throw new Error(`${criar.status} ${await criar.text()}`);
     return 'criado';
   } catch (err) {
-    console.log(`${cor.amarelo}  Não deu para conferir o atalho da atividade: ${err.message}${cor.fim}`);
     console.log(
-      `${cor.fraco}  Sem ele, a atividade pode não aparecer no foguete para outras pessoas.${cor.fim}`
+      `${cor.amarelo}  Não deu para conferir o atalho da atividade: ${err.message}${cor.fim}`,
+    );
+    console.log(
+      `${cor.fraco}  Sem ele, a atividade pode não aparecer no foguete para outras pessoas.${cor.fim}`,
     );
     return 'falhou';
   }

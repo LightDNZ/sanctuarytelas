@@ -1,0 +1,14 @@
+# Quebras de linha normalizadas no repositório.
+#
+# Sem isto, cada contribuidor de Windows commita o arquivo inteiro reescrito só
+# porque o editor dele usa CRLF — foi o que aconteceu quando o client/src/main.js
+# entrou com CRLF: com core.autocrlf=true do outro lado, qualquer edição de uma
+# linha passa a aparecer como duas mil, o blame morre e dois PRs que tocam o
+# mesmo arquivo conflitam sem divergir em nada.
+#
+# text=auto: o git decide o que é texto. eol=lf: no repositório é sempre LF, e
+# cada um vê no disco o que o seu sistema usa.
+* text=auto eol=lf
+
+# Binários, para o git nunca tentar converter nada dentro deles.
+*.png binary

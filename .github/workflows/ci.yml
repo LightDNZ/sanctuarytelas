@@ -1,0 +1,120 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    # Windows está na matriz porque é onde este projeto é escrito, e porque o
+    # que quebra só num sistema — caminho com barra invertida, CRLF, o spawn do
+    # servidor pelos scripts — quebra lá.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Node 22 é o piso do projeto: o servidor usa fetch nativo, --watch e
+      # fs.statfsSync, e nenhum dos três existe antes disso.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Formatação
+        run: npm run format:check
+
+      # O site é o que a atividade carrega. Um PR que quebra o build do cliente
+      # não pode ficar verde só porque o servidor continua de pé. Vem antes dos
+      # testes porque parte deles fala com o servidor, que serve o que saiu daqui.
+      - name: Build do site
+        run: npm run build
+
+      - name: Testes
+        run: npm test
+
+      # Sobe o próprio servidor numa porta livre e o derruba no fim.
+      - name: Smoke do painel
+        run: npm run smoke:admin
+
+      # Este outro fala com um servidor já no ar, então quem o sobe é daqui.
+      # bash nos dois sistemas: o runner do Windows tem, e um "&" que funciona
+      # em cmd e em bash ao mesmo tempo não existe.
+      - name: Subir o servidor
+        shell: bash
+        env:
+          NODE_ENV: development
+          PORT: 3001
+        run: |
+          node server/index.js > server.log 2>&1 &
+          echo $! > server.pid
+          for _ in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3001/api/health > /dev/null && exit 0
+            sleep 1
+          done
+          echo 'o servidor não respondeu ao /api/health em 60s'
+          cat server.log
+          exit 1
+
+      - name: Smoke do relay
+        run: npm run smoke
+
+      - name: Smoke da aba de captura
+        run: npm run smoke:controle
+
+      # if: always() porque um smoke vermelho deixaria o processo pendurado, e
+      # o passo seguinte é o log, que é justamente o que se quer ler quando ele
+      # ficou vermelho.
+      - name: Derrubar o servidor
+        if: always()
+        shell: bash
+        run: |
+          [ -f server.pid ] && kill "$(cat server.pid)" || true
+          [ -f server.log ] && cat server.log || true
+
+  coverage:
+    # A medida em um sistema só, de propósito: o piso é um número, e dois
+    # sistemas medindo o mesmo código dão números levemente diferentes — o
+    # `server/system.js` lê /proc onde ele existe. Duas medidas seriam duas
+    # discussões sobre qual delas vale.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar
+        run: npm ci
+      - name: Build do site
+        run: npm run build
+      # O piso de 86% mora no vitest.config.js; aqui só se roda a medida. Abaixo
+      # dele o vitest sai diferente de zero, e o PR fica vermelho.
+      - name: Coverage
+        run: npm run coverage
+
+  docker:
+    # A imagem é entrega, não conveniência: o deploy no VPS sobe exatamente
+    # esta. Ela quebra sozinha — copiando um caminho que deixou de existir, ou
+    # instalando sem uma dependência nova — sem que teste nenhum perceba.
+    # Só constrói; não envia nada para lugar nenhum.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Construir a imagem
+        run: docker build -t sala-de-tela:ci .

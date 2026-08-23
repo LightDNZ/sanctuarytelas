@@ -3,75 +3,140 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Compartilhar tela</title>
+    <title>Transmitir</title>
     <!-- ?v= existe porque share.js/css têm nome fixo. Quem abriu a página antes
          dos cabeçalhos no-store guardou a versão antiga por heurística do
          navegador, e continuaria usando ela para sempre. Trocar a query força
          uma URL nova. Incremente ao publicar mudanças nesses arquivos. -->
-    <link rel="stylesheet" href="/share.css?v=9" />
+    <link rel="stylesheet" href="/share.css?v=25" />
   </head>
   <body>
     <main class="card">
       <header>
-        <h1>Compartilhar tela</h1>
-        <p class="sub" id="roomLine">Carregando…</p>
+        <h1>Transmitir</h1>
       </header>
 
-      <section id="setup">
-        <div class="row">
-          <label for="quality">Qualidade</label>
-          <select id="quality">
-            <option value="1000000">Leve — 1 Mbps</option>
-            <option value="2500000" selected>Boa — 2,5 Mbps</option>
-            <option value="5000000">Alta — 5 Mbps</option>
-            <option value="8000000">Máxima — 8 Mbps</option>
-          </select>
-        </div>
+      <!-- Erro que impede a página inteira: token inválido, navegador sem
+           suporte. Os erros de cada fonte ficam no bloco dela. -->
+      <p id="pageStatus" class="status" role="status"></p>
 
-        <div class="row">
-          <label for="fps">Taxa de quadros</label>
-          <select id="fps">
-            <option value="15">15 fps — economiza banda</option>
-            <option value="30" selected>30 fps — mais fluido</option>
-            <option value="60">60 fps — jogo e vídeo, exija 5 Mbps ou mais</option>
-          </select>
-        </div>
+      <div class="fontes">
+        <section class="bloco" id="bloco-tela">
+          <h2>Tela</h2>
 
-        <p id="presetLine" class="preset" hidden></p>
+          <!-- Fora do setup e do live de propósito: dá para escolher antes de
+               começar e para corrigir com a transmissão no ar, que é quando o
+               problema costuma aparecer. Vale para a câmera também. -->
+          <div class="ajustes">
+            <label>
+              Qualidade
+              <select id="qualidade">
+                <option value="800000">Leve — 0,8 Mbps</option>
+                <option value="1500000">Média — 1,5 Mbps</option>
+                <option value="2500000">Boa — 2,5 Mbps</option>
+                <option value="5000000">Alta — 5 Mbps</option>
+                <option value="8000000">Máxima — 8 Mbps</option>
+              </select>
+            </label>
+            <label>
+              Quadros
+              <select id="quadros">
+                <option value="15">15 fps</option>
+                <option value="30">30 fps</option>
+                <option value="60">60 fps</option>
+              </select>
+            </label>
+          </div>
 
-        <label class="check">
-          <input id="withAudio" type="checkbox" />
-          <span>Compartilhar o som do computador</span>
-        </label>
+          <div id="tela-setup">
+            <div class="sem-preview" id="tela-vazio">Sem preview</div>
+            <video id="tela-previa" muted playsinline hidden></video>
 
-        <p class="note">
-          Marque também "Compartilhar o áudio" na janela que o navegador abrir — sem isso
-          ele entrega a tela sem som.
-        </p>
+            <p class="note" id="tela-nota">
+              Marque "Compartilhar o áudio" na janela do navegador para levar o som.
+            </p>
 
-        <button id="start" class="primary">Escolher tela e transmitir</button>
-      </section>
+            <!-- A seta escolhe sem transmitir; o botão transmite o que estiver
+                 escolhido. Separados porque conferir o enquadramento e ir ao
+                 ar são decisões diferentes, e juntas não dá para voltar atrás
+                 diante de quem já está assistindo. -->
+            <div class="acao">
+              <button id="tela-start" class="primary">Escolher tela e transmitir</button>
+              <button
+                id="tela-escolher"
+                class="primary seta"
+                title="Ver outra tela antes de transmitir"
+                aria-label="Ver outra tela antes de transmitir"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+              </button>
+            </div>
+          </div>
 
-      <section id="live" hidden>
-        <div class="live-badge"><span class="dot"></span> No ar</div>
-        <video id="preview" muted playsinline></video>
-        <div class="stats">
-          <div><strong id="viewers">0</strong><span>assistindo</span></div>
-          <div><strong id="fpsOut">—</strong><span>quadros</span></div>
-          <div><strong id="bitrate">—</strong><span>enviando</span></div>
-          <div><strong id="elapsed">00:00</strong><span>no ar</span></div>
-        </div>
-        <button id="somAba" class="secondary" hidden>Som de uma aba</button>
-        <button id="stop" class="danger">Parar de transmitir</button>
-      </section>
+          <div id="tela-live" hidden>
+            <div class="live-badge"><span class="dot"></span> No ar</div>
+            <video id="tela-preview" muted playsinline></video>
+            <div class="stats">
+              <div><strong id="tela-viewers">0</strong><span>assistindo</span></div>
+              <div><strong id="tela-fps">—</strong><span>quadros</span></div>
+              <div><strong id="tela-bitrate">—</strong><span>enviando</span></div>
+              <div><strong id="tela-elapsed">00:00</strong><span>no ar</span></div>
+            </div>
+            <button id="somAba" class="secondary" hidden>Som de uma aba ou janela</button>
+            <button id="tela-stop" class="danger">Parar de transmitir a tela</button>
+          </div>
 
-      <p id="status" class="status" role="status"></p>
+          <p id="tela-status" class="status" role="status"></p>
+        </section>
+
+        <section class="bloco" id="bloco-camera">
+          <h2>Câmera</h2>
+
+          <div id="camera-setup">
+            <div class="sem-preview" id="camera-vazio">Sem preview</div>
+            <video id="camera-previa" muted playsinline hidden></video>
+
+            <div class="acao">
+              <button id="camera-start" class="primary">Ligar a câmera</button>
+              <button
+                id="camera-escolher"
+                class="primary seta"
+                title="Escolher a câmera"
+                aria-label="Escolher a câmera"
+                aria-haspopup="menu"
+                aria-expanded="false"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+              </button>
+
+              <!-- Preenchido depois da permissão: antes dela o navegador entrega
+                   os dispositivos sem nome, e uma lista de itens em branco não
+                   ajuda ninguém a escolher. -->
+              <ul id="camera-menu" class="menu" role="menu" hidden></ul>
+            </div>
+          </div>
+
+          <div id="camera-live" hidden>
+            <div class="live-badge"><span class="dot"></span> No ar</div>
+            <video id="camera-preview" muted playsinline></video>
+            <div class="stats">
+              <div><strong id="camera-viewers">0</strong><span>assistindo</span></div>
+              <div><strong id="camera-fps">—</strong><span>quadros</span></div>
+              <div><strong id="camera-bitrate">—</strong><span>enviando</span></div>
+              <div><strong id="camera-elapsed">00:00</strong><span>no ar</span></div>
+            </div>
+            <button id="camera-stop" class="danger">Desligar a câmera</button>
+          </div>
+
+          <p id="camera-status" class="status" role="status"></p>
+        </section>
+      </div>
 
       <footer>
         <p>Mantenha esta aba aberta enquanto transmite. Você pode voltar para o Discord — a transmissão continua.</p>
       </footer>
     </main>
 
-    <script type="module" src="/share.js?v=10"></script>
+    <script type="module" src="/share.js?v=25"></script>
   </body>
 </html>

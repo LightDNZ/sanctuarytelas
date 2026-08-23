@@ -74,9 +74,10 @@ body {
   transition: border-color 0.15s;
 }
 
-/* Quem está transmitindo ganha a borda verde, igual à call do Discord. */
+/* Quem está transmitindo fica com o fundo preto, sem moldura: a borda verde
+   duplicava o que o Discord já desenha em volta da tela compartilhada, e no
+   aninhamento de tela dentro de tela virava uma pilha de molduras. */
 .tile.sharing {
-  border-color: var(--live);
   background: #000;
   cursor: pointer;
 }
@@ -107,8 +108,10 @@ body {
   max-height: 100%;
 }
 
-/* Tela cheia: só o palco. A barra de controles fica, senão não haveria saída
-   visível — sair por tecla é atalho, não é caminho. */
+/* Tela cheia: some a lateral e a moldura, e sobra só o palco. Fora dela o
+   respiro é o mesmo da grade de avatares — a borda não pode pular de tamanho
+   quando alguém começa a transmitir. O espaço que a imagem ganhou veio das
+   barras, que deixaram de reservar faixa (ver `#app.flutua`). */
 .grid.palco.cheia {
   grid-template-columns: minmax(0, 1fr);
   padding: 0;
@@ -260,7 +263,11 @@ body {
 
    Com a caixa definida, `contain` faz o resto: reduz ou amplia preservando a
    proporção, nunca corta, e deixa o fundo preto aparecer nas sobras. */
-.tile canvas {
+/* O vídeo da conexão direta ocupa exatamente o mesmo lugar do canvas e segue a
+   mesma regra: os dois nunca estão no DOM ao mesmo tempo, e a troca entre um
+   transporte e o outro não pode mudar o enquadramento. */
+.tile canvas,
+.tile video {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -463,6 +470,30 @@ body {
   max-width: calc(100% - 16px);
 }
 
+/* Rótulo da fonte. Só a câmera leva um: tela é o caso comum, e marcar as duas
+   viraria ruído em cima de cada miniatura. Canto de cima à esquerda, que é o
+   único livre — o nome e a plateia ficam no rodapé, o parar fica à direita. */
+.tile-fonte {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 500;
+  /* Não rouba o clique do tile, que alterna destaque e tela cheia. */
+  pointer-events: none;
+}
+
+.sidebar .tile-fonte {
+  top: 5px;
+  left: 5px;
+  padding: 2px 6px;
+  font-size: 10.5px;
+}
+
 .tile-watchers {
   position: relative;
   display: inline-flex;
@@ -633,12 +664,9 @@ button {
   cursor: pointer;
 }
 
-/* As barras ocupam espaço no layout em vez de flutuar sobre o vídeo.
-
-   A versão anterior as deixava sobrepostas e as escondia sozinha depois de uns
-   segundos parada — o sumiço existia só para desobstruir a tela. Ocupando
-   lugar, elas não obstruem nada, e some junto o comportamento de aparecer e
-   desaparecer debaixo do cursor. */
+/* Sem transmissão no palco as barras ocupam espaço no layout: não há imagem
+   embaixo para obstruir, e nada precisa sumir sob o cursor. Havendo, é o
+   contrário — o porquê está na regra de `#app.flutua`. */
 .topbar {
   flex: 0 0 auto;
   display: flex;
@@ -654,6 +682,48 @@ button {
   align-items: center;
   gap: 10px;
   padding: 0 16px 16px;
+}
+
+/* Com tela no palco as barras saem do layout e flutuam sobre o vídeo: cada
+   faixa reservada é uma tira de imagem a menos, e a imagem é o que se veio ver.
+   Vale fora da tela cheia também — a faixa desperdiçada é a mesma nos dois
+   modos. Paradas elas somem sozinhas, e qualquer movimento do cursor as traz de
+   volta: quem não mexe o mouse não está procurando botão nenhum. */
+#app.flutua .topbar,
+#app.flutua .bottombar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  transition: opacity 0.25s;
+}
+
+/* Coladas na borda as cápsulas encostam no canto do vídeo e ficam metade
+   dentro, metade fora. O recuo é o mesmo em cima e embaixo: a barra flutua
+   dentro da imagem, não pendurada na quina dela. */
+#app.flutua .topbar {
+  top: 12px;
+}
+
+#app.flutua .bottombar {
+  bottom: 12px;
+}
+
+/* Com a lateral no ar o palco não é a janela inteira, e uma barra centrada na
+   janela aparece visivelmente à direita do vídeo. O recuo é a lateral mais o
+   divisor — as mesmas medidas que a grade usa nas colunas. */
+#app.flutua.palco:not(.cheia) .bottombar {
+  right: calc(var(--strip, 300px) + 10px);
+}
+
+/* Vale sempre que as barras flutuam, com transmissão ou sem: elas cobrem a
+   grade de avatares do mesmo jeito que cobririam o vídeo, e barra que fica é
+   barra que atrapalha. pointer-events junto com a opacidade, porque uma barra
+   invisível continua roubando o clique que era para o que está embaixo. */
+#app.flutua.ocioso .topbar,
+#app.flutua.ocioso .bottombar {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Sem nada visível dentro, a barra vira uma faixa vazia — é o que sobra no
@@ -704,6 +774,15 @@ button {
   gap: 10px;
 }
 
+/* No dock todo botão é só ícone. O padding lateral do .btn existe para os que
+   têm texto e, aqui, dava 49 de largura para 46 de altura — redondo de longe,
+   ovalado de perto. Largura fixa igual à altura resolve sem mexer nos botões
+   com rótulo, que continuam se ajustando ao texto. */
+.dock .btn {
+  width: 46px;
+  padding: 0;
+}
+
 /* Cápsulas separadas por função, como na call: a ação principal, o que é da
    sala, e a saída. O agrupamento é o que deixa a barra legível de relance. */
 .group {
@@ -751,10 +830,6 @@ button {
 
 .btn:hover:not(:disabled) {
   background: #43454b;
-}
-
-.btn.wide {
-  padding: 0 20px;
 }
 
 /* Ação principal disponível */
@@ -1011,28 +1086,9 @@ button {
 
 /* ------------------------------------------------------------------ perfil */
 
-.profile-btn {
-  padding: 0;
-  width: 40px;
-  flex: 0 0 auto;
-  overflow: hidden;
-  background: transparent;
-}
-
-.profile-btn:hover:not(:disabled) {
-  background: transparent;
-  filter: brightness(1.15);
-}
-
 /* O avatar preenche o botão inteiro, para o disco colorido ficar do mesmo
    tamanho dos círculos escuros dos outros botões do dock. O `.avatar` do tile
    usa largura fluida (clamp), que aqui precisa ser anulada. */
-.profile-btn .avatar {
-  width: 100%;
-  height: 100%;
-  font-size: 14px;
-}
-
 .profile-head {
   display: flex;
   align-items: center;
@@ -1138,33 +1194,6 @@ button {
   border: 1px solid var(--line);
   border-radius: 7px;
   font: inherit;
-}
-
-/* A caixa de marcar alinha pelo topo: o texto de apoio quebra em duas linhas e
-   centralizar deixaria a marca flutuando no meio da frase. */
-.field-check {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 16px 0 4px;
-  font-size: 13.5px;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.field-check input {
-  width: 17px;
-  height: 17px;
-  margin: 1px 0 0;
-  flex: 0 0 auto;
-  accent-color: var(--accent);
-}
-
-.field-check .opt {
-  display: block;
-  margin-top: 3px;
-  font-size: 12px;
-  color: var(--muted);
 }
 
 .modal-note {
@@ -1317,15 +1346,6 @@ button {
   .btn svg {
     width: 18px;
     height: 18px;
-  }
-
-  .btn.wide {
-    padding: 0 10px;
-  }
-
-  /* O ícone e a cor já dizem o que o botão faz; a dica cobre o resto. */
-  #shareLabel {
-    display: none;
   }
 
   .tile-watchers,

@@ -60,7 +60,7 @@ O `npm ci` respeita o `package-lock.json` — em servidor isso importa, porque
 ## 4. Configuração
 
 ```bash
-sudo -u sala npm run configurar
+sudo -u sanctuarytelas npm run configurar
 ```
 
 O assistente pergunta o essencial e escreve o `.env`. Confira ao final que
@@ -80,7 +80,7 @@ DISCORD_CLIENT_SECRET=...
 recusa subir sem ele, porque sem segredo os crachás de sala seriam forjáveis.
 
 ```bash
-sudo chmod 600 /opt/sala-de-tela/.env
+sudo chmod 600 /opt/sanctuarytelas/.env
 ```
 
 ## 5. Serviço

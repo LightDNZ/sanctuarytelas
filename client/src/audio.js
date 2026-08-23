@@ -82,7 +82,7 @@ export function createAudio({ onError, volume = 1 } = {}) {
           type: 'key', // Todo pacote Opus se decodifica sozinho.
           timestamp: view.getFloat64(2),
           data: new Uint8Array(buffer, 18),
-        })
+        }),
       );
     } catch (err) {
       console.warn('[audio decode]', err.message);
@@ -135,7 +135,9 @@ export function createAudio({ onError, volume = 1 } = {}) {
     if (decoder && decoder.state !== 'closed') {
       try {
         decoder.close();
-      } catch {}
+      } catch {
+        // Fechar o que já se fechou sozinho lança; não há nada a desfazer.
+      }
     }
     decoder = null;
 

@@ -42,11 +42,6 @@ h1 {
   font-size: 22px;
 }
 
-.sub {
-  margin: 0 0 24px;
-  color: var(--muted);
-  font-size: 14px;
-}
 
 .row {
   display: flex;
@@ -70,6 +65,25 @@ select {
   border: 1px solid var(--line);
   border-radius: 6px;
   font: inherit;
+}
+
+/* Duas colunas em telas com espaço, empilhado no aperto. */
+.ajustes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.ajustes label {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ajustes select {
+  max-width: none;
 }
 
 .check {
@@ -158,12 +172,6 @@ video {
   object-fit: contain;
 }
 
-.preset {
-  margin: 0 0 4px;
-  color: var(--muted);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
 
 .note {
   margin: 18px 0 24px;
@@ -197,6 +205,204 @@ video {
 .stats span {
   color: var(--muted);
   font-size: 12px;
+}
+
+/* As duas fontes lado a lado quando a janela deixa. Empilhadas, cada preview
+   empurra o outro para fora da tela — e é justamente com as duas no ar que se
+   precisa ver as duas. Abaixo do ponto de corte volta a ser uma coluna, que é
+   o que cabe. */
+.fontes {
+  margin-top: 18px;
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 900px) {
+  .fontes {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Colunas da mesma altura, com a ação de cada uma encostada na base. Sem
+     isto o botão da tela desce sozinho — só ela tem a caixa de som — e as duas
+     ações, que são o mesmo gesto, ficam em alturas diferentes. */
+  .bloco {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bloco > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* O espaço livre vai todo para cima da ação, que é o que encosta na base das
+     duas colunas — assim elas terminam na mesma linha mesmo quando só uma tem
+     algo a dizer acima do botão.
+
+     Um `margin-top: auto` só por coluna: dois dividiriam a sobra entre eles e
+     nada encostaria em lugar nenhum. Por isso o botão azul cobre o bloco parado
+     e o vermelho cobre o bloco no ar — cada um existe só no seu, então nunca
+     aparecem os dois juntos. */
+  .bloco > div > .acao {
+    margin-top: auto;
+  }
+
+  .bloco > div > button.danger {
+    margin-top: auto;
+  }
+}
+
+/* O lugar do preview enquanto não há preview.
+
+   Só existe lado a lado: empilhado, uma caixa vazia do tamanho de um vídeo
+   empurraria a outra fonte para fora da tela, que é justamente o que o layout
+   de duas colunas foi feito para evitar. Em duas colunas ela é o contrário —
+   sem ela a coluna parada fica com um vão do tamanho do vídeo da outra, e as
+   duas ações, que são o mesmo gesto, desencontram na vertical. */
+.sem-preview {
+  display: none;
+  /* Cresce com a coluna. Com tamanho fixo ele sobra um vão morto acima do
+     botão assim que a outra fonte entra no ar e estica o lado de lá — o
+     `aspect-ratio` continua dando o tamanho mínimo, quando não há o que
+     preencher. */
+  flex: 1 1 auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px dashed var(--line);
+  background: #1a1b1e;
+  color: var(--muted);
+  font-size: 13px;
+  /* Folga mínima até a ação. O `margin-top: auto` do botão já afasta os dois
+     quando a coluna sobra altura, mas quando não sobra eles encostavam. */
+  margin-bottom: 16px;
+}
+
+/* Precisa vir depois da regra acima: media query não soma especificidade, então
+   entre duas declarações iguais quem ganha é a que está mais abaixo. */
+@media (min-width: 900px) {
+  .sem-preview {
+    display: flex;
+  }
+}
+
+/* Ação principal e a seta que a acompanha, na mesma linha.
+
+   A seta é irmã do botão, não um item dentro dele: são duas ações distintas —
+   escolher e transmitir — e um botão dentro de outro não existe em HTML. */
+.acao {
+  position: relative;
+  display: flex;
+  gap: 8px;
+}
+
+.acao > .primary {
+  flex: 1;
+  margin: 0;
+}
+
+.acao > .seta {
+  flex: 0 0 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.seta svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Abre para cima porque o botão fica na base da coluna: para baixo o menu
+   nasceria fora da página. */
+.menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  min-width: 240px;
+  max-width: 100%;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #101114;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 9px 10px;
+  border-radius: 6px;
+  background: none;
+  color: var(--text, #f2f3f5);
+  font-size: 13px;
+  text-align: left;
+}
+
+.menu button:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* O tique marca a escolhida. O espaço fica reservado nas outras para os nomes
+   começarem todos na mesma coluna. */
+.menu button::before {
+  content: '';
+  flex: 0 0 14px;
+  color: var(--accent, #5865f2);
+}
+
+.menu button[aria-checked='true']::before {
+  content: '✓';
+}
+
+/* A prévia ocupa o mesmo lugar do placeholder — um exclui o outro, e a folga
+   até a ação é a mesma nos dois. Só a prévia: o vídeo do bloco no ar já tem o
+   respiro das estatísticas logo abaixo. */
+#tela-previa,
+#camera-previa {
+  margin-bottom: 16px;
+}
+
+/* Um bloco por fonte. A régua acima separa sem gastar altura, que é o que
+   falta numa página que agora tem dois controles em vez de um. */
+.bloco {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bloco h2 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+/* O bloco da fonte pedida pela atividade, enquanto ela espera um clique daqui.
+   Sem isto o pedido chega e nada na página muda de aparência. */
+.bloco.chamando {
+  border-top-color: var(--accent, #5865f2);
+}
+
+.bloco.chamando h2 {
+  opacity: 1;
+  color: var(--accent, #5865f2);
 }
 
 .status {
@@ -235,4 +441,13 @@ footer p {
   border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: 13px;
+}
+
+/* O cartão só alarga quando há duas colunas para preencher. Mantido estreito
+   abaixo disso: linha de texto longa demais é pior de ler, e em coluna única
+   não há nada para ocupar a largura extra. */
+@media (min-width: 900px) {
+  .card {
+    max-width: 980px;
+  }
 }

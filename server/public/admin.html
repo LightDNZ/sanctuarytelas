@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Admin · Sanctuary Telas</title>
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <main id="loading" class="center">
+      <div class="center-inner">
+        <div class="spinner" aria-hidden="true"></div>
+        <p class="muted">Verificando sua sessão…</p>
+      </div>
+    </main>
+
+    <main id="login" class="center" hidden>
+      <div class="center-inner">
+        <div class="mark" aria-hidden="true">ST</div>
+        <h1>Painel do Sanctuary Telas</h1>
+        <p id="loginMessage" class="muted">
+          Entre com a conta do Discord autorizada.
+        </p>
+        <a id="loginButton" class="btn btn-brand" href="/admin/auth/login">
+          Entrar com Discord
+        </a>
+      </div>
+    </main>
+
+    <div id="dashboard" hidden>
+      <header class="topbar">
+        <div class="mark" aria-hidden="true">ST</div>
+        <h1>Sanctuary Telas</h1>
+
+        <!-- O ponto verde é o único indicador de conexão. Quando o servidor
+             para de responder ele fica vermelho e o texto muda — não precisa
+             de um segundo aviso dizendo a mesma coisa. -->
+        <span id="live" class="badge on"><i></i> Ao vivo</span>
+
+        <div class="spacer"></div>
+
+        <span class="who">
+          <img id="adminAvatar" alt="" hidden />
+          <span id="adminName"></span>
+        </span>
+        <button id="refresh" class="btn btn-icon" title="Atualizar agora" aria-label="Atualizar agora">↻</button>
+        <button id="logout" class="btn">Sair</button>
+      </header>
+
+      <div class="shell">
+        <div id="errorBanner" class="banner" hidden></div>
+
+        <section class="stats" aria-label="Resumo">
+          <article class="card stat">
+            <p class="label">Pessoas online</p>
+            <p id="statPeople" class="value">—</p>
+            <p id="statPeopleSub" class="sub">&nbsp;</p>
+          </article>
+
+          <article class="card stat">
+            <p class="label">Transmitindo</p>
+            <p id="statStreams" class="value">—</p>
+            <p id="statStreamsSub" class="sub">&nbsp;</p>
+          </article>
+
+          <article class="card stat">
+            <p class="label">Banda agora</p>
+            <p id="statBandwidth" class="value">—</p>
+            <p id="statBandwidthSub" class="sub">&nbsp;</p>
+            <!-- Só aparece quando há descarte. Zero é o normal, e número que
+                 fica zero o tempo todo ensina a pessoa a não olhar para ele. -->
+            <p id="statDropped" class="sub warn" hidden></p>
+          </article>
+
+          <article class="card stat">
+            <p class="label">Ping médio</p>
+            <p id="statPing" class="value">—</p>
+            <p id="statPingSub" class="sub">&nbsp;</p>
+          </article>
+        </section>
+
+        <section class="card panel" aria-labelledby="trafficTitle">
+          <div class="panel-head">
+            <h2 id="trafficTitle">Tráfego</h2>
+            <div class="spacer"></div>
+            <div class="legend">
+              <span class="in"><i></i> Recebido</span>
+              <span class="out"><i></i> Enviado</span>
+            </div>
+          </div>
+          <canvas id="chart" class="chart"></canvas>
+        </section>
+
+        <section class="card panel" aria-labelledby="peopleTitle">
+          <div class="panel-head">
+            <h2 id="peopleTitle">Quem está online</h2>
+            <div class="spacer"></div>
+            <span id="peopleCount" class="badge">0</span>
+          </div>
+
+          <p id="peopleEmpty" class="empty">Ninguém conectado agora.</p>
+
+          <div id="peopleScroll" class="table-scroll" hidden>
+            <table>
+              <thead>
+                <tr>
+                  <th>Pessoa</th>
+                  <th>Servidor</th>
+                  <th>Sala</th>
+                  <th>Estado</th>
+                  <th>Ping</th>
+                </tr>
+              </thead>
+              <tbody id="peopleRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="duo">
+          <section class="card panel" aria-labelledby="resourcesTitle">
+            <div class="panel-head"><h2 id="resourcesTitle">Recursos</h2></div>
+            <div class="minis">
+              <div class="mini">
+                <p class="label">CPU do processo</p>
+                <p id="cpuProcess" class="mini-value">—</p>
+              </div>
+              <div class="mini">
+                <p class="label">CPU da máquina</p>
+                <p id="cpuHost" class="mini-value">—</p>
+              </div>
+              <div class="mini">
+                <p class="label">Memória do processo</p>
+                <p id="memProcess" class="mini-value">—</p>
+              </div>
+              <div class="mini">
+                <p class="label">Memória da máquina</p>
+                <p id="memHost" class="mini-value">—</p>
+              </div>
+              <div class="mini">
+                <p class="label">Disco</p>
+                <p id="disk" class="mini-value">—</p>
+              </div>
+              <div class="mini">
+                <p class="label">No ar há</p>
+                <p id="uptime" class="mini-value">—</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="card panel" aria-labelledby="envTitle">
+            <div class="panel-head"><h2 id="envTitle">Ambiente</h2></div>
+            <dl id="envList" class="dl"></dl>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script src="/admin.js"></script>
+  </body>
+</html>

@@ -71,7 +71,9 @@ async function configurar(atual) {
   const DISCORD_CLIENT_ID = await perguntar('Client ID', {
     padrao: atual.DISCORD_CLIENT_ID,
     valida: (v) =>
-      /^[0-9]{15,21}$/.test(v) ? null : 'O Client ID é só números (uns 19). Confira e cole de novo.',
+      /^[0-9]{15,21}$/.test(v)
+        ? null
+        : 'O Client ID é só números (uns 19). Confira e cole de novo.',
   });
 
   const DISCORD_CLIENT_SECRET = await perguntar('Client Secret', {
@@ -87,10 +89,6 @@ async function configurar(atual) {
     DISCORD_CLIENT_ID,
     DISCORD_CLIENT_SECRET,
   });
-
-  // Confere aqui, com as credenciais em mao, o atalho que faz a atividade
-  // aparecer no foguete. Sem isto era uma configuracao manual invisivel.
-  contarEntryPoint(await garantirEntryPoint(DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET));
 
   linha(`\n${cor.verde}  Guardado.${cor.fim}`);
   nota('  O que falta colar no portal do Discord aparece junto com o endereço,');
@@ -149,6 +147,23 @@ if (!configurado) {
 
 rl.close();
 
+// -------------------------------------------------------------- entry point
+
+// Fora do `configurar()` de propósito: o menu tem um "Continuar" que pula a
+// configuração inteira, e junto com ela ia embora a única checagem do comando
+// que coloca a atividade no seletor do Discord. Uma aplicação sem
+// PRIMARY_ENTRY_POINT não aparece lá — sem erro no portal, sem erro aqui, e
+// nada na tela ligando uma coisa à outra. Quem já tinha as credenciais no
+// `.env` nunca passava por esta linha.
+//
+// Conferir a cada subida é barato e idempotente: o `garantirEntryPoint` lê a
+// lista antes e só cria o que falta. As credenciais são relidas porque o
+// `configurar()` pode tê-las acabado de trocar, e `atual` é de antes disso.
+const credenciais = lerEnv();
+contarEntryPoint(
+  await garantirEntryPoint(credenciais.DISCORD_CLIENT_ID, credenciais.DISCORD_CLIENT_SECRET),
+);
+
 // -------------------------------------------------------------------- build
 
 linha();
@@ -160,7 +175,9 @@ const build = spawnSync(process.execPath, [VITE, 'build'], {
 });
 
 if (build.status !== 0) {
-  linha(`\n${cor.vermelho}  O site não compilou. Rode "npm run build" para ver o erro.${cor.fim}\n`);
+  linha(
+    `\n${cor.vermelho}  O site não compilou. Rode "npm run build" para ver o erro.${cor.fim}\n`,
+  );
   process.exit(1);
 }
 
@@ -183,7 +200,7 @@ function iniciarServidor(origem) {
   acompanhar(
     'servidor',
     cor.azul,
-    spawn(process.execPath, ['server/index.js'], { cwd: RAIZ, stdio: 'pipe', env })
+    spawn(process.execPath, ['server/index.js'], { cwd: RAIZ, stdio: 'pipe', env }),
   );
 }
 
@@ -202,7 +219,9 @@ if (tunel) {
 
   setTimeout(() => {
     if (servidorIniciado || encerrandoAgora()) return;
-    linha(`\n${cor.amarelo}  O túnel demorou a responder — subindo o servidor mesmo assim.${cor.fim}`);
+    linha(
+      `\n${cor.amarelo}  O túnel demorou a responder — subindo o servidor mesmo assim.${cor.fim}`,
+    );
     nota('  Em localhost tudo funciona; só o acesso de fora depende do túnel.');
     iniciarServidor(null);
   }, 45_000).unref();
