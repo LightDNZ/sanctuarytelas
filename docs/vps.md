@@ -1,6 +1,6 @@
 # Hospedar num VPS
 
-Este é o caminho recomendado para deixar a Sala de Tela no ar sem depender do
+Este é o caminho recomendado para deixar o Sanctuary Telas no ar sem depender do
 computador de ninguém. O programa é um relay de vídeo: a saída é
 `bitrate × espectadores`, e isso não cabe bem em hospedagem compartilhada. Um
 VPS pequeno — 1 vCPU, 2 GB, tráfego generoso — resolve por poucos euros ao mês.
@@ -42,12 +42,12 @@ Um usuário de sistema sem shell e sem senha: se um dia alguém escapar do
 processo, escapa para um usuário que não pode fazer nada.
 
 ```bash
-sudo adduser --system --group --home /opt/sala-de-tela sala
+sudo adduser --system --group --home /opt/sanctuarytelas sanctuarytelas
 
-sudo -u sala git clone https://github.com/Jc007zZ/discord-screen.git /opt/sala-de-tela
-cd /opt/sala-de-tela
-sudo -u sala npm ci
-sudo -u sala npm run build
+sudo -u sanctuarytelas git clone https://github.com/LightDNZ/sanctuarytelas.git /opt/sanctuarytelas
+cd /opt/sanctuarytelas
+sudo -u sanctuarytelas npm ci
+sudo -u sanctuarytelas npm run build
 ```
 
 O home do usuário é a própria pasta do projeto de propósito: sem home, o npm
@@ -86,10 +86,10 @@ sudo chmod 600 /opt/sala-de-tela/.env
 ## 5. Serviço
 
 ```bash
-sudo cp infra/sala-de-tela.service /etc/systemd/system/
+sudo cp infra/sanctuarytelas.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now sala-de-tela
-systemctl status sala-de-tela
+sudo systemctl enable --now sanctuarytelas
+systemctl status sanctuarytelas
 ```
 
 Se o `ExecStart` reclamar, confira o caminho do node com `which node` — o
@@ -131,17 +131,17 @@ iframe e o mapeamento em cache.
 ## Atualizar
 
 ```bash
-cd /opt/sala-de-tela
-sudo -u sala git pull
-sudo -u sala npm ci
-sudo -u sala npm run build
-sudo systemctl restart sala-de-tela
+cd /opt/sanctuarytelas
+sudo -u sanctuarytelas git pull
+sudo -u sanctuarytelas npm ci
+sudo -u sanctuarytelas npm run build
+sudo systemctl restart sanctuarytelas
 ```
 
 ## Quando algo der errado
 
 ```bash
-journalctl -u sala-de-tela -f      # o servidor
+journalctl -u sanctuarytelas -f      # o servidor
 journalctl -u caddy -f             # certificado e proxy
 curl -sI https://seu-dominio | grep -i x-frame   # não deve devolver nada
 ```

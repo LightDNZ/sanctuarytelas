@@ -1,6 +1,4 @@
-![Como não compartilhar tela no Discord](como-nao-compartilhar-tela-no-discord-banner.png)
-
-# Sala de Tela
+# Sanctuary Telas
 
 Mostre sua tela para quem está na mesma call do Discord.
 Uma pessoa compartilha, todo mundo assiste sem sair do Discord.

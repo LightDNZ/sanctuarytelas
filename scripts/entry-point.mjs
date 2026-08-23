@@ -70,7 +70,7 @@ export async function garantirEntryPoint(clientId, clientSecret) {
       headers: { ...auth, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: 'abrir',
-        description: 'Abrir a Sala de Tela nesta call',
+        description: 'Abrir o Sanctuary Telas nesta call',
         type: PRIMARY_ENTRY_POINT,
         handler: DISCORD_LAUNCH_ACTIVITY,
       }),

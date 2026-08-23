@@ -100,7 +100,7 @@ async function configurar(atual) {
 // --------------------------------------------------------------------- menu
 
 linha();
-linha(`${cor.forte}  Sala de Tela${cor.fim}`);
+linha(`${cor.forte}  Sanctuary Telas${cor.fim}`);
 
 const atual = lerEnv();
 const configurado = Boolean(atual.DISCORD_CLIENT_ID && atual.DISCORD_CLIENT_SECRET);

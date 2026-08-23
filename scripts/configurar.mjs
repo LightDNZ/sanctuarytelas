@@ -44,7 +44,7 @@ const encurtar = (texto) => (texto.length > 24 ? `${texto.slice(0, 10)}…${text
 const atual = lerEnv();
 
 linha();
-linha(`${cor.forte}  Sala de Tela · configuração${cor.fim}`);
+linha(`${cor.forte}  Sanctuary Telas · configuração${cor.fim}`);
 nota('  Vou criar o arquivo de configuração para você.');
 nota('  Pode parar com Ctrl+C e rodar de novo quando quiser — nada se perde.');
 

@@ -1,4 +1,4 @@
-# Imagem do servidor da Sala de Tela.
+# Imagem do servidor do Sanctuary Telas.
 #
 # Duas etapas de propósito. A primeira monta o site — o que exige o vite e o
 # código do cliente inteiro; a segunda leva só o que roda: servidor, shared,

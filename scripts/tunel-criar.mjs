@@ -46,7 +46,7 @@ function cf(cloudflared, args, { mostrar = false } = {}) {
 // --------------------------------------------------------------------- fluxo
 
 linha();
-linha(`${cor.forte}  Sala de Tela · endereço fixo${cor.fim}`);
+linha(`${cor.forte}  Sanctuary Telas · endereço fixo${cor.fim}`);
 nota('  Vou criar um túnel seu na Cloudflare, com endereço que não muda.');
 nota('  Você precisa de um domínio já ativo na conta da Cloudflare.');
 linha();
@@ -188,7 +188,7 @@ const configPath = path.join(CASA, `${nome}.yml`);
 fs.writeFileSync(
   configPath,
   [
-    `# Túnel da Sala de Tela. Criado por "npm run tunel:criar".`,
+    `# Túnel do Sanctuary Telas. Criado por "npm run tunel:criar".`,
     '#',
     '# O alvo é a porta do servidor, e não a do Vite: a página de captura',
     '# precisa estar acessível fora do proxy do Discord, senão a captura de',

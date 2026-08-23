@@ -40,6 +40,33 @@ if (isProd && !process.env.SESSION_SECRET) {
 const app = express();
 app.use(express.json());
 
+// Bloqueia acesso direto pelo navegador — só permite via Discord Activity.
+function apenasDiscord(req, res, next) {
+  // Rotas que o Discord Activity precisa (API, WS, auth, shared) passam direto.
+  if (
+    req.path.startsWith('/api') ||
+    req.path === '/ws' ||
+    req.path.startsWith('/auth') ||
+    req.path.startsWith('/shared') ||
+    req.path === '/api/health'
+  ) {
+    return next();
+  }
+
+  const referer = req.headers.referer || req.headers.origin || '';
+  const vemDoDiscord =
+    referer.includes('discord.com') || referer.includes('discordsays.com');
+
+  if (!vemDoDiscord) {
+    return res.status(403).send(
+      '<h1>403 - Acesso restrito</h1><p>Esta aplicação só pode ser acessada através da atividade do Discord.</p>'
+    );
+  }
+  next();
+}
+
+app.use(apenasDiscord);
+
 // Uma Activity roda dentro de um iframe em <id>.discordsays.com, que por sua
 // vez está dentro do discord.com. Declarar essa cadeia é o que autoriza o
 // navegador a desenhar a página ali.
@@ -782,7 +809,7 @@ server.listen(PORT, () => {
   const local = `http://localhost:${PORT}`;
 
   console.log('');
-  console.log(`  Sala de Tela no ar em  ${local}`);
+  console.log(`  Sanctuary Telas no ar em  ${local}`);
   console.log(`  Abra esse endereço no navegador para usar fora do Discord.`);
   console.log('');
 

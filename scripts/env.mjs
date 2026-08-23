@@ -55,7 +55,7 @@ export function gravarEnv(novos) {
   const v = { ...lerEnv(), ...novos };
 
   const linhas = [
-    '# Configuração da Sala de Tela.',
+    '# Configuração do Sanctuary Telas.',
     '# Criado por "npm run configurar" — rode de novo para mudar qualquer coisa.',
     '# Este arquivo tem senhas: não mande para ninguém nem publique no GitHub.',
     '',

@@ -1,14 +1,14 @@
-# Serviço do servidor da Sala de Tela.
+# Serviço do servidor do Sanctuary Telas.
 #
 # Instalar com:
-#   sudo cp infra/sala-de-tela.service /etc/systemd/system/
+#   sudo cp infra/sanctuarytelas.service /etc/systemd/system/
 #   sudo systemctl daemon-reload
-#   sudo systemctl enable --now sala-de-tela
+#   sudo systemctl enable --now sanctuarytelas
 #
-# Acompanhar:  journalctl -u sala-de-tela -f
+# Acompanhar:  journalctl -u sanctuarytelas -f
 
 [Unit]
-Description=Sala de Tela — compartilhamento de tela para o Discord
+Description=Sanctuary Telas — compartilhamento de tela para o Discord
 # network-online, e não network: o servidor consulta o Discord no arranque, e
 # subir antes da rede estar de pé vira um erro que ninguém liga ao reboot.
 After=network-online.target
@@ -18,7 +18,7 @@ Wants=network-online.target
 Type=simple
 User=sala
 Group=sala
-WorkingDirectory=/opt/sala-de-tela
+WorkingDirectory=/opt/sanctuarytelas
 
 # O caminho absoluto do node é exigência do systemd — ele não tem PATH de
 # shell. Confira o seu com "which node" se instalou por nvm ou asdf.
@@ -45,7 +45,7 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 # O programa escreve o build em client/dist e nada mais.
-ReadWritePaths=/opt/sala-de-tela
+ReadWritePaths=/opt/sanctuarytelas
 
 [Install]
 WantedBy=multi-user.target

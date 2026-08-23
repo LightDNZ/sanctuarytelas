@@ -8,8 +8,8 @@
 # programa. Ela chega pela variável PORT, junto com o resto da configuração,
 # em "Variáveis de ambiente" no painel.
 
-DISPLAY_NAME=Sala de Tela
-DESCRIPTION=Compartilhamento de tela com som para o Discord
+DISPLAY_NAME=Sanctuary Telas
+DESCRIPTION=Compartilhamento de tela com som para o Discord - Sanctuary Telas
 
 # O caminho é a partir da raiz do que sobe: o servidor mora em server/.
 MAIN=server/index.js
@@ -26,5 +26,5 @@ START=npm start
 
 MEMORY=512
 VERSION=recommended
-SUBDOMAIN=tela-discord
+SUBDOMAIN=sanctuarytelas
 AUTORESTART=true
