@@ -293,7 +293,10 @@ function applySidebarState() {
   const toggleBtn = sidebar.querySelector('.sidebar-toggle');
   if (toggleBtn) {
     toggleBtn.setAttribute('aria-expanded', String(!sidebarCollapsed));
-    toggleBtn.setAttribute('aria-label', sidebarCollapsed ? 'Expandir lateral' : 'Recolher lateral');
+    toggleBtn.setAttribute(
+      'aria-label',
+      sidebarCollapsed ? 'Expandir lateral' : 'Recolher lateral',
+    );
     toggleBtn.setAttribute('data-tip', sidebarCollapsed ? 'Expandir lateral' : 'Recolher lateral');
     toggleBtn.innerHTML = sidebarCollapsed
       ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>'
@@ -619,11 +622,11 @@ function buildTile(p, { palco = false, semVideo = false, slot: slotDado = null }
   if (slot !== null && available.get(slot)?.fonte === 'camera') {
     // Conta quantas câmeras essa pessoa já tem para numerar
     const camerasDaPessoa = [...available.values()].filter(
-      (a) => a.userId === p.id && a.fonte === 'camera'
+      (a) => a.userId === p.id && a.fonte === 'camera',
     ).length;
-    const idx = [...available.values()].filter(
-      (a) => a.userId === p.id && a.fonte === 'camera'
-    ).findIndex((a) => a === available.get(slot));
+    const idx = [...available.values()]
+      .filter((a) => a.userId === p.id && a.fonte === 'camera')
+      .findIndex((a) => a === available.get(slot));
     const marca = document.createElement('span');
     marca.className = 'tile-fonte';
     marca.textContent = camerasDaPessoa > 1 ? `Câmera ${idx + 1}` : 'Câmera';
@@ -1330,7 +1333,14 @@ function ensureStatsTimer() {
         const q = s.video.getVideoPlaybackQuality?.();
         const dropped = q ? q.droppedVideoFrames - (s.droppedAntes ?? q.droppedVideoFrames) : 0;
         if (q) s.droppedAntes = q.droppedVideoFrames;
-        updateOverlay({ rtt, relay, via: 'WebRTC (direto)', res: m.w ? `${m.w}×${m.h}` : '—', fps: quadrosDoVideo(s), dropped });
+        updateOverlay({
+          rtt,
+          relay,
+          via: 'WebRTC (direto)',
+          res: m.w ? `${m.w}×${m.h}` : '—',
+          fps: quadrosDoVideo(s),
+          dropped,
+        });
       });
     } else {
       $('pVia').textContent = s.pc ? 'relay (negociando direto…)' : 'relay (WebSocket)';
@@ -1343,7 +1353,15 @@ function ensureStatsTimer() {
       const j = s.player.getJitter();
       $('pJitter').textContent = j === null ? '—' : `${j} ms`;
       const bw = s.player.getBandwidth?.();
-      updateOverlay({ rtt: s.player.getLag(), relay: false, via: s.pc ? 'relay (negociando…)' : 'relay (WebSocket)', res: s.player.getSizes().video, fps: `${s.player.takeFrameCount()} fps`, bitrate: bw ? `${(bw / 1e6).toFixed(1)} Mb/s` : '—', jitter: j });
+      updateOverlay({
+        rtt: s.player.getLag(),
+        relay: false,
+        via: s.pc ? 'relay (negociando…)' : 'relay (WebSocket)',
+        res: s.player.getSizes().video,
+        fps: `${s.player.takeFrameCount()} fps`,
+        bitrate: bw ? `${(bw / 1e6).toFixed(1)} Mb/s` : '—',
+        jitter: j,
+      });
     }
 
     // Quatro estados diferentes que, sem isto, parecem todos "sem som".
