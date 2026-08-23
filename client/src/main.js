@@ -2369,19 +2369,21 @@ async function abrirLink(fonte) {
   if (!roomTokens) return;
   const url = urlDaCaptura(fonte).toString();
 
-  if (inDiscord) {
+  if (inDiscord && sdk && typeof sdk.commands?.openExternalLink === 'function') {
     try {
       const res = await sdk.commands.openExternalLink({ url });
       // Clientes antigos devolvem null; só tratamos false como recusa explícita.
       if (res?.opened === false) {
         toast('Você recusou abrir o link. Sem isso não dá para capturar a tela.', true);
       }
+      return;
     } catch (err) {
-      toast(`Não foi possível abrir o link: ${err.message}`, true);
+      // Se openExternalLink falhar, tenta abrir em nova janela como fallback
+      console.warn('[abrirLink] openExternalLink falhou, tentando window.open:', err);
     }
-    return;
   }
 
+  // Fallback: abre em nova janela (pode ser bloqueado por popup blocker)
   window.open(url, JANELA_CAPTURA);
 }
 
